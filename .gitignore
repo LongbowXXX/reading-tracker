@@ -1,0 +1,14 @@
+# JetBrains / IntelliJ
+.idea/
+*.iml
+out/
+
+# Kotlin / Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
