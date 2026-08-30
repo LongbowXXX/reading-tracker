@@ -14,6 +14,9 @@ ktlint_code_style = intellij_idea
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # import の並びは IDE の既定に委ねる
 ktlint_standard_no-wildcard-imports = enabled
+# 関数とその結果型を1ファイルにまとめる方針のため、ファイル名＝クラス名の規則は無効にする
+# （tasks.md が指定するファイル名に合わせる）
+ktlint_standard_filename = disabled
 max_line_length = 140
 
 [*.{xml,yml,yaml,json,toml}]

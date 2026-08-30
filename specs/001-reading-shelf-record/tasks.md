@@ -46,33 +46,33 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ### ドメイン層のテスト（先に書き、失敗することを確認してから実装する）
 
-- [ ] T010 [P] `domain/src/test/kotlin/…/model/IsbnTest.kt` に ISBN のテストを書く（13桁の検証、10桁→13桁変換、末尾 X、ハイフン・空白の除去、桁数不正）
-- [ ] T011 [P] `domain/src/test/kotlin/…/shelf/ShelfNumberInheritanceTest.kt` に棚番号継承のテストを書く（**憲法 原則III 必須**: 直前の巻からの継承／31巻での変更が32巻以降へ継承／巻番号順の該当なし時に記録日時順へフォールバック／継承元が未入力なら結果も未入力／対象巻番号が NULL の場合）
-- [ ] T012 [P] `domain/src/test/kotlin/…/reading/NextVolumeResolverTest.kt` に次巻判定のテストを書く（中断中の巻が優先／読了最大巻+1／記録なしは Unknown／巻番号 NULL の扱い）
-- [ ] T013 [P] `domain/src/test/kotlin/…/title/VolumeTitleParserTest.kt` に作品照合のテストを書く（同一シリーズの異なる巻から同一の照合キーが得られること、巻数表記の複数パターンの抽出）
-- [ ] T014 [P] `domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt` に一括適用のテストを書く（**憲法 原則III 必須**: 戻り値が入力に含まれるレコードのみで構成され、他店舗のレコードを含まないこと）
+- [X] T010 [P] `domain/src/test/kotlin/…/model/IsbnTest.kt` に ISBN のテストを書く（13桁の検証、10桁→13桁変換、末尾 X、ハイフン・空白の除去、桁数不正）
+- [X] T011 [P] `domain/src/test/kotlin/…/shelf/ShelfNumberInheritanceTest.kt` に棚番号継承のテストを書く（**憲法 原則III 必須**: 直前の巻からの継承／31巻での変更が32巻以降へ継承／巻番号順の該当なし時に記録日時順へフォールバック／継承元が未入力なら結果も未入力／対象巻番号が NULL の場合）
+- [X] T012 [P] `domain/src/test/kotlin/…/reading/NextVolumeResolverTest.kt` に次巻判定のテストを書く（中断中の巻が優先／読了最大巻+1／記録なしは Unknown／巻番号 NULL の扱い）
+- [X] T013 [P] `domain/src/test/kotlin/…/title/VolumeTitleParserTest.kt` に作品照合のテストを書く（同一シリーズの異なる巻から同一の照合キーが得られること、巻数表記の複数パターンの抽出）
+- [X] T014 [P] `domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt` に一括適用のテストを書く（**憲法 原則III 必須**: 戻り値が入力に含まれるレコードのみで構成され、他店舗のレコードを含まないこと）
 
 ### ドメイン層の実装
 
-- [ ] T015 [P] `domain/src/main/kotlin/…/model/Isbn.kt` に `Isbn` を実装する（[contracts/domain-api.md](./contracts/domain-api.md) の表に従う）
-- [ ] T016 [P] `domain/src/main/kotlin/…/model/` に **`Store` / `Work` / `Volume`** および `ReadingStatus` / `ShelfNumber` / `PlacementSnapshot` / `ReadingSnapshot` / `VolumeRef` を実装する（**`ReadingStatus` は READ と PAUSED の2値のみ** — 憲法 原則II）
-- [ ] T017 `domain/src/main/kotlin/…/shelf/ShelfNumberInheritance.kt` に `resolveInheritedShelfNumber()` を実装する（**店舗 ID を引数に取らないこと** — 他店舗へ到達しえない構造にする）
-- [ ] T018 `domain/src/main/kotlin/…/reading/NextVolumeResolver.kt` に `resolveNextVolume()` と `NextVolume` を実装する
-- [ ] T019 `domain/src/main/kotlin/…/title/VolumeTitleParser.kt` に `parseVolumeTitle()` を実装する
-- [ ] T020 `domain/src/main/kotlin/…/shelf/ShelfNumberBulkUpdate.kt` に `applyShelfNumberToWork()` を実装する（**UI からは呼ばない**。原則III のテスト要件のためだけに存在する — plan.md の Complexity Tracking）
-- [ ] T021 [P] `domain/src/main/kotlin/…/port/` に `BibliographySource` / `BarcodeScanner` / `ReadingRepository` のインターフェースと結果型を定義する（[contracts/](./contracts/) に従う）
-- [ ] T022 `domain/src/test/kotlin/…/fake/FakeReadingRepository.kt` に `ReadingRepository` のフェイク実装を作成する（後続のユースケーステスト T034・T035・T052・T060 が共用する。インメモリのコレクションで保持し、**Android にも Room にも依存しないこと**）
-- [ ] T023 `./gradlew :domain:test` が全て緑になることを確認する
+- [X] T015 [P] `domain/src/main/kotlin/…/model/Isbn.kt` に `Isbn` を実装する（[contracts/domain-api.md](./contracts/domain-api.md) の表に従う）
+- [X] T016 [P] `domain/src/main/kotlin/…/model/` に **`Store` / `Work` / `Volume`** および `ReadingStatus` / `ShelfNumber` / `PlacementSnapshot` / `ReadingSnapshot` / `VolumeRef` を実装する（**`ReadingStatus` は READ と PAUSED の2値のみ** — 憲法 原則II）
+- [X] T017 `domain/src/main/kotlin/…/shelf/ShelfNumberInheritance.kt` に `resolveInheritedShelfNumber()` を実装する（**店舗 ID を引数に取らないこと** — 他店舗へ到達しえない構造にする）
+- [X] T018 `domain/src/main/kotlin/…/reading/NextVolumeResolver.kt` に `resolveNextVolume()` と `NextVolume` を実装する
+- [X] T019 `domain/src/main/kotlin/…/title/VolumeTitleParser.kt` に `parseVolumeTitle()` を実装する
+- [X] T020 `domain/src/main/kotlin/…/shelf/ShelfNumberBulkUpdate.kt` に `applyShelfNumberToWork()` を実装する（**UI からは呼ばない**。原則III のテスト要件のためだけに存在する — plan.md の Complexity Tracking）
+- [X] T021 [P] `domain/src/main/kotlin/…/port/` に `BibliographySource` / `BarcodeScanner` / `ReadingRepository` のインターフェースと結果型を定義する（[contracts/](./contracts/) に従う）
+- [X] T022 `domain/src/test/kotlin/…/fake/FakeReadingRepository.kt` に `ReadingRepository` のフェイク実装を作成する（後続のユースケーステスト T034・T035・T052・T060 が共用する。インメモリのコレクションで保持し、**Android にも Room にも依存しないこと**）
+- [X] T023 `./gradlew :domain:test` が全て緑になることを確認する
 
 ### データ層
 
-- [ ] T024 [P] `data/src/main/kotlin/…/db/entity/` に Room エンティティを作成する（`StoreEntity` / `WorkEntity` / `VolumeEntity` / `ReadingRecordEntity` / `ShelfPlacementEntity`。**`ShelfPlacementEntity` に UNIQUE(storeId, volumeId)、`ReadingRecordEntity` に UNIQUE(volumeId)** — [data-model.md](./data-model.md)）
-- [ ] T025 [P] `data/src/main/kotlin/…/db/Converters.kt` に型コンバータを実装する（`Instant`、`ReadingStatus`）
-- [ ] T026 `data/src/main/kotlin/…/db/ReadingTrackerDatabase.kt` を作成し、スキーマ JSON のエクスポートを有効にする
-- [ ] T027 [P] `data/src/main/kotlin/…/db/dao/` に DAO を作成する（`StoreDao` / `WorkDao` / `VolumeDao` / `ReadingRecordDao` / `ShelfPlacementDao`）
-- [ ] T028 `data/src/test/kotlin/…/db/ConstraintTest.kt` に制約のテストを書く（**Robolectric で実行する。`@RunWith(RobolectricTestRunner::class)` とインメモリ Room データベースを用いる**）（同一店舗・同一巻の配架を2件作れない／同一巻の読書記録を2件作れない／`shelfNumber` が NULL でも保存できる／**A店の配架更新がB店の同一巻に影響しない**）
-- [ ] T029 `data/src/main/kotlin/…/repository/ReadingRepositoryImpl.kt` に `ReadingRepository` の実装を書く（DAO を束ね、ドメインの型へ変換する）
-- [ ] T030 `data/src/main/kotlin/…/di/DataModule.kt` に Hilt モジュールを作成する（Database、DAO、Repository の提供）
+- [X] T024 [P] `data/src/main/kotlin/…/db/entity/` に Room エンティティを作成する（`StoreEntity` / `WorkEntity` / `VolumeEntity` / `ReadingRecordEntity` / `ShelfPlacementEntity`。**`ShelfPlacementEntity` に UNIQUE(storeId, volumeId)、`ReadingRecordEntity` に UNIQUE(volumeId)** — [data-model.md](./data-model.md)）
+- [X] T025 [P] `data/src/main/kotlin/…/db/Converters.kt` に型コンバータを実装する（`Instant`、`ReadingStatus`）
+- [X] T026 `data/src/main/kotlin/…/db/ReadingTrackerDatabase.kt` を作成し、スキーマ JSON のエクスポートを有効にする
+- [X] T027 [P] `data/src/main/kotlin/…/db/dao/` に DAO を作成する（`StoreDao` / `WorkDao` / `VolumeDao` / `ReadingRecordDao` / `ShelfPlacementDao`）
+- [X] T028 `data/src/test/kotlin/…/db/ConstraintTest.kt` に制約のテストを書く（**Robolectric で実行する。`@RunWith(RobolectricTestRunner::class)` とインメモリ Room データベースを用いる**）（同一店舗・同一巻の配架を2件作れない／同一巻の読書記録を2件作れない／`shelfNumber` が NULL でも保存できる／**A店の配架更新がB店の同一巻に影響しない**）
+- [X] T029 `data/src/main/kotlin/…/repository/ReadingRepositoryImpl.kt` に `ReadingRepository` の実装を書く（DAO を束ね、ドメインの型へ変換する）
+- [X] T030 `data/src/main/kotlin/…/di/DataModule.kt` に Hilt モジュールを作成する（Database、DAO、Repository の提供）
 
 **Checkpoint**: ドメイン層とデータ層が完成し、テストが緑。ここからユーザーストーリーの実装に着手できる
 

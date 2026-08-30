@@ -1,0 +1,387 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "d59953eaaf418c8c2102fd2bc595a79c",
+    "entities": [
+      {
+        "tableName": "stores",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "works",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `matchKey` TEXT NOT NULL, `author` TEXT, `publisher` TEXT, `isProvisional` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matchKey",
+            "columnName": "matchKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "author",
+            "columnName": "author",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "publisher",
+            "columnName": "publisher",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isProvisional",
+            "columnName": "isProvisional",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_works_matchKey",
+            "unique": false,
+            "columnNames": [
+              "matchKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_works_matchKey` ON `${TABLE_NAME}` (`matchKey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "volumes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workId` INTEGER NOT NULL, `volumeNumber` INTEGER, `isbn13` TEXT, `displayTitle` TEXT NOT NULL, `publishedDate` TEXT, `createdAt` INTEGER NOT NULL, FOREIGN KEY(`workId`) REFERENCES `works`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workId",
+            "columnName": "workId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumeNumber",
+            "columnName": "volumeNumber",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isbn13",
+            "columnName": "isbn13",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "displayTitle",
+            "columnName": "displayTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "publishedDate",
+            "columnName": "publishedDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_volumes_workId",
+            "unique": false,
+            "columnNames": [
+              "workId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_volumes_workId` ON `${TABLE_NAME}` (`workId`)"
+          },
+          {
+            "name": "index_volumes_isbn13",
+            "unique": true,
+            "columnNames": [
+              "isbn13"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_volumes_isbn13` ON `${TABLE_NAME}` (`isbn13`)"
+          },
+          {
+            "name": "index_volumes_workId_volumeNumber",
+            "unique": true,
+            "columnNames": [
+              "workId",
+              "volumeNumber"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_volumes_workId_volumeNumber` ON `${TABLE_NAME}` (`workId`, `volumeNumber`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "works",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "workId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "reading_records",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `volumeId` INTEGER NOT NULL, `status` TEXT NOT NULL, `note` TEXT, `recordedAt` INTEGER NOT NULL, FOREIGN KEY(`volumeId`) REFERENCES `volumes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumeId",
+            "columnName": "volumeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "recordedAt",
+            "columnName": "recordedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_reading_records_volumeId",
+            "unique": true,
+            "columnNames": [
+              "volumeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_reading_records_volumeId` ON `${TABLE_NAME}` (`volumeId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "volumes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "volumeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "shelf_placements",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `storeId` INTEGER NOT NULL, `workId` INTEGER NOT NULL, `volumeId` INTEGER NOT NULL, `shelfNumber` TEXT, `updatedAt` INTEGER NOT NULL, FOREIGN KEY(`storeId`) REFERENCES `stores`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`workId`) REFERENCES `works`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`volumeId`) REFERENCES `volumes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "storeId",
+            "columnName": "storeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workId",
+            "columnName": "workId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumeId",
+            "columnName": "volumeId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shelfNumber",
+            "columnName": "shelfNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_shelf_placements_storeId_volumeId",
+            "unique": true,
+            "columnNames": [
+              "storeId",
+              "volumeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_shelf_placements_storeId_volumeId` ON `${TABLE_NAME}` (`storeId`, `volumeId`)"
+          },
+          {
+            "name": "index_shelf_placements_storeId_workId",
+            "unique": false,
+            "columnNames": [
+              "storeId",
+              "workId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_shelf_placements_storeId_workId` ON `${TABLE_NAME}` (`storeId`, `workId`)"
+          },
+          {
+            "name": "index_shelf_placements_workId",
+            "unique": false,
+            "columnNames": [
+              "workId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_shelf_placements_workId` ON `${TABLE_NAME}` (`workId`)"
+          },
+          {
+            "name": "index_shelf_placements_volumeId",
+            "unique": false,
+            "columnNames": [
+              "volumeId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_shelf_placements_volumeId` ON `${TABLE_NAME}` (`volumeId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "stores",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "storeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "works",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "workId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "volumes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "volumeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd59953eaaf418c8c2102fd2bc595a79c')"
+    ]
+  }
+}
