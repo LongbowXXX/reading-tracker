@@ -12,3 +12,17 @@ local.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Kotlin / JVM 成果物
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.log
+.kotlin/
+
+# 環境変数ファイル
+.env
+.env.*
+
+# エディタ
+.vscode/

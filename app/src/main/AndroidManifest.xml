@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- バーコード読み取り（A-1a）。棚番号シールで読めない場合は手入力へ落とすため、必須ではない -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- ISBN からの書誌情報取得のみに使用する。データ本体は端末内に閉じる（憲法 原則V） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".ReadingTrackerApplication"
+        android:allowBackup="true"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ReadingTracker">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ReadingTracker">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

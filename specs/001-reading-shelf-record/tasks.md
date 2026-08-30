@@ -27,14 +27,14 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 **Purpose**: Gradle マルチモジュールの骨格を作り、空のアプリがビルドできる状態にする。あわせて、UI の骨格に関わる未確定事項を先に潰す
 
 - [ ] T001 [P] **実店舗で**、棚番号シールがバーコードを覆う頻度をコミック数冊分観察し、結果を記録する（要求定義書 9. 未確定事項）。コードに依存しないため他タスクと並行してよいが、**記録画面の実装（T045）に着手する前に完了させること。** 覆う頻度が高い場合、手入力を主導線とする組み替えを検討する
-- [ ] T002 Gradle Wrapper を生成し `gradlew` / `gradlew.bat` / `gradle/wrapper/gradle-wrapper.properties` を配置する
-- [ ] T003 `settings.gradle.kts` に `:app` / `:data` / `:domain` を宣言し、ルート `build.gradle.kts` にプラグインの版を集約する
-- [ ] T004 `gradle/libs.versions.toml` にバージョンカタログを定義する（AGP, Kotlin, KSP, Compose BOM, Room, Hilt, OkHttp, kotlinx.serialization, play-services-code-scanner, JUnit 5, **Robolectric, JUnit 4**）
-- [ ] T005 [P] `domain/build.gradle.kts` を作成する（`kotlin("jvm")`、JVM 17、JUnit 5。**Android 依存を一切追加しないこと** — 憲法 原則III）
-- [ ] T006 [P] `data/build.gradle.kts` を作成する（Android library、Room + KSP、Hilt、OkHttp、kotlinx.serialization、`:domain` に依存。**Robolectric と JUnit 4 を `testImplementation` に加え、`testOptions.unitTests.isIncludeAndroidResources = true` を設定する** — T028 の Room 制約テストを JVM 上で実行するため）
-- [ ] T007 [P] `app/build.gradle.kts` と `app/src/main/AndroidManifest.xml` を作成する（applicationId `io.github.longbowxxx.readingtracker`、minSdk 26、compileSdk/targetSdk 36、Compose、Hilt、`:data` と `:domain` に依存）
-- [ ] T008 [P] ktlint / spotless の設定をルート `build.gradle.kts` に追加し、コード整形の基準を固定する
-- [ ] T009 `./gradlew assembleDebug` が通ることを確認する（空のアプリ）
+- [X] T002 Gradle Wrapper を生成し `gradlew` / `gradlew.bat` / `gradle/wrapper/gradle-wrapper.properties` を配置する
+- [X] T003 `settings.gradle.kts` に `:app` / `:data` / `:domain` を宣言し、ルート `build.gradle.kts` にプラグインの版を集約する
+- [X] T004 `gradle/libs.versions.toml` にバージョンカタログを定義する（AGP, Kotlin, KSP, Compose BOM, Room, Hilt, OkHttp, kotlinx.serialization, play-services-code-scanner, JUnit 5, **Robolectric, JUnit 4**）
+- [X] T005 [P] `domain/build.gradle.kts` を作成する（`kotlin("jvm")`、JVM 17、JUnit 5。**Android 依存を一切追加しないこと** — 憲法 原則III）
+- [X] T006 [P] `data/build.gradle.kts` を作成する（Android library、Room + KSP、Hilt、OkHttp、kotlinx.serialization、`:domain` に依存。**Robolectric と JUnit 4 を `testImplementation` に加え、`testOptions.unitTests.isIncludeAndroidResources = true` を設定する** — T028 の Room 制約テストを JVM 上で実行するため）
+- [X] T007 [P] `app/build.gradle.kts` と `app/src/main/AndroidManifest.xml` を作成する（applicationId `io.github.longbowxxx.readingtracker`、minSdk 26、compileSdk/targetSdk 36、Compose、Hilt、`:data` と `:domain` に依存）
+- [X] T008 [P] ktlint / spotless の設定をルート `build.gradle.kts` に追加し、コード整形の基準を固定する
+- [X] T009 `./gradlew assembleDebug` が通ることを確認する（空のアプリ）
 
 ---
 
