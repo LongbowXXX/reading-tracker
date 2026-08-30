@@ -1,6 +1,6 @@
 # Implementation Plan: 読書記録と棚番号の管理（中核）
 
-**Branch**: `main`（フィーチャーブランチ未作成。ブランチ生成を担う `before_plan` / `before_specify` フックが未導入のため） | **Date**: 2026-08-30 | **Spec**: [spec.md](./spec.md)
+**Branch**: `main`（フィーチャーブランチを作成しない運用。理由は [spec.md](./spec.md) の Feature Branch 欄に記載） | **Date**: 2026-08-30 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-reading-shelf-record/spec.md`
 
