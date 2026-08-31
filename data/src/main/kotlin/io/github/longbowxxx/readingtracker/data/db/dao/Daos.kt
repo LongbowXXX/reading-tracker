@@ -66,6 +66,38 @@ interface VolumeDao {
     @Query("SELECT * FROM volumes WHERE workId = :workId ORDER BY volumeNumber")
     suspend fun listByWork(workId: Long): List<VolumeEntity>
 
+    /**
+     * 巻の書誌情報を更新する（FR-008 の紐づけ、FR-019 の修正）。
+     * **主キーは変えない。** 読書記録と配架レコードは巻 ID で結ばれているため。
+     */
+    @Query(
+        """
+        UPDATE volumes
+        SET volumeNumber = :volumeNumber,
+            isbn13 = :isbn13,
+            displayTitle = :displayTitle,
+            publishedDate = :publishedDate
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateDetails(id: Long, volumeNumber: Int?, isbn13: String?, displayTitle: String, publishedDate: String?)
+
+    /** 暫定名のまま残っている巻（FR-008 の紐づけ導線）。 */
+    @Query(
+        """
+        SELECT v.id AS volumeId,
+               v.workId AS workId,
+               w.title AS workTitle,
+               v.displayTitle AS displayTitle,
+               v.volumeNumber AS volumeNumber
+        FROM volumes v
+        INNER JOIN works w ON w.id = v.workId
+        WHERE w.isProvisional = 1
+        ORDER BY w.title, v.id
+        """,
+    )
+    suspend fun listProvisionalVolumes(): List<ProvisionalVolumeRow>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(volume: VolumeEntity): Long
 }

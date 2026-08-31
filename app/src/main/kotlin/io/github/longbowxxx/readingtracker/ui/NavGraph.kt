@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.longbowxxx.readingtracker.ui.link.LinkWorkScreen
 import io.github.longbowxxx.readingtracker.ui.record.RecordScreen
 import io.github.longbowxxx.readingtracker.ui.visit.VisitScreen
 
@@ -23,6 +24,9 @@ object Destinations {
 
     /** 来店時に読める続きを見る（User Story 2）。 */
     const val VISIT = "visit"
+
+    /** 暫定記録を正式な作品へ紐づける（User Story 3）。 */
+    const val LINK = "link"
 }
 
 private data class TabItem(val route: String, val label: String)
@@ -31,6 +35,7 @@ private val tabs =
     listOf(
         TabItem(Destinations.RECORD, "記録する"),
         TabItem(Destinations.VISIT, "この店で読む"),
+        TabItem(Destinations.LINK, "暫定記録"),
     )
 
 @Composable
@@ -67,6 +72,7 @@ fun ReadingTrackerNavGraph(modifier: Modifier = Modifier, navController: NavHost
         ) {
             composable(Destinations.RECORD) { RecordScreen() }
             composable(Destinations.VISIT) { VisitScreen() }
+            composable(Destinations.LINK) { LinkWorkScreen() }
         }
     }
 }

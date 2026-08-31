@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
+import io.github.longbowxxx.readingtracker.domain.usecase.LinkProvisionalWorkUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.RecordVolumeUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.UpdateRecordUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.VisitListUseCase
@@ -35,4 +36,9 @@ object DomainModule {
     @Provides
     @Singleton
     fun provideVisitListUseCase(repository: ReadingRepository): VisitListUseCase = VisitListUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideLinkProvisionalWorkUseCase(repository: ReadingRepository): LinkProvisionalWorkUseCase =
+        LinkProvisionalWorkUseCase(repository)
 }

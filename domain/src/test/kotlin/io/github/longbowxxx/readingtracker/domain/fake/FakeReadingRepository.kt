@@ -10,6 +10,7 @@ import io.github.longbowxxx.readingtracker.domain.model.ShelfNumber
 import io.github.longbowxxx.readingtracker.domain.model.Store
 import io.github.longbowxxx.readingtracker.domain.model.Volume
 import io.github.longbowxxx.readingtracker.domain.model.Work
+import io.github.longbowxxx.readingtracker.domain.port.ProvisionalVolume
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
 import io.github.longbowxxx.readingtracker.domain.port.StoreWorkSnapshot
 import java.time.Instant
@@ -84,6 +85,39 @@ class FakeReadingRepository : ReadingRepository {
         placements
             .filterValues { it.volumeId == volumeId }
             .forEach { (key, stored) -> placements[key] = stored.copy(workId = newWorkId) }
+    }
+
+    override suspend fun updateVolumeDetails(
+        volumeId: Long,
+        volumeNumber: Int?,
+        isbn: Isbn?,
+        displayTitle: String,
+        publishedDate: String?,
+    ) {
+        val index = volumes.indexOfFirst { it.id == volumeId }
+        if (index < 0) return
+        volumes[index] =
+            volumes[index].copy(
+                volumeNumber = volumeNumber,
+                isbn = isbn,
+                displayTitle = displayTitle,
+                publishedDate = publishedDate,
+            )
+
+        // 巻番号が変わったら、読書記録側のスナップショットも追随させる
+        readings[volumeId]?.let { readings[volumeId] = it.copy(volumeNumber = volumeNumber) }
+    }
+
+    override suspend fun listProvisionalVolumes(): List<ProvisionalVolume> = volumes.mapNotNull { volume ->
+        val work = works.firstOrNull { it.id == volume.workId } ?: return@mapNotNull null
+        if (!work.isProvisional) return@mapNotNull null
+        ProvisionalVolume(
+            volumeId = volume.id,
+            workId = work.id,
+            workTitle = work.title,
+            displayTitle = volume.displayTitle,
+            volumeNumber = volume.volumeNumber,
+        )
     }
 
     override suspend fun findReading(volumeId: Long): ReadingSnapshot? = readings[volumeId]

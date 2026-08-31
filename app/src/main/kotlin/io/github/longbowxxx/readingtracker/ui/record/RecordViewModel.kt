@@ -43,6 +43,8 @@ data class RecordDraft(
     val note: String,
     val sourceName: String?,
     val bibliographyMissing: Boolean,
+    /** 暫定名での記録か（FR-008）。ISBN もバーコードも使えない本を記録するとき true */
+    val isProvisional: Boolean = false,
 )
 
 data class RecordUiState(
@@ -210,6 +212,35 @@ constructor(
         }
     }
 
+    /**
+     * バーコードも ISBN も使えない本を、暫定の名前で記録し始める（FR-008 / User Story 3）。
+     *
+     * バーコード非搭載の旧刊や、書誌が引けない本のための経路。
+     * 後から正式な作品へ紐づけ直せる。
+     */
+    fun startProvisionalDraft() {
+        _uiState.update { state ->
+            state.copy(
+                inputError = null,
+                draft =
+                RecordDraft(
+                    isbn = null,
+                    title = "",
+                    volumeNumberText = "",
+                    author = "",
+                    publisher = "",
+                    publishedDate = null,
+                    status = ReadingStatus.READ,
+                    shelfNumberText = "",
+                    note = "",
+                    sourceName = null,
+                    bibliographyMissing = false,
+                    isProvisional = true,
+                ),
+            )
+        }
+    }
+
     fun cancelDraft() {
         _uiState.update { it.copy(draft = null, isbnInput = "", inputError = null) }
     }
@@ -239,6 +270,7 @@ constructor(
                         // 空欄は「棚番号は未入力」であって、空文字ではない（FR-017）
                         shelfNumber = draft.shelfNumberText.trim().takeIf { it.isNotBlank() }?.let(::ShelfNumber),
                         note = draft.note.takeIf { it.isNotBlank() },
+                        isProvisional = draft.isProvisional,
                     ),
                 )
 

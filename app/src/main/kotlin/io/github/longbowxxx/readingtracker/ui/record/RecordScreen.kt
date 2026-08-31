@@ -135,6 +135,10 @@ fun RecordScreen(modifier: Modifier = Modifier, viewModel: RecordViewModel = hil
             }
         }
 
+        HorizontalDivider()
+
+        ProvisionalInputSection(onStartProvisional = viewModel::startProvisionalDraft)
+
         state.inputError?.let { error ->
             Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         }

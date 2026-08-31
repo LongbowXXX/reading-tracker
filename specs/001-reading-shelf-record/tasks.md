@@ -147,16 +147,16 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T060 [P] [US3] `domain/src/test/kotlin/…/usecase/LinkProvisionalWorkUseCaseTest.kt` にテストを書く（紐づけ後も読書状態・棚番号・メモが失われないこと — FR-008）
-- [ ] T061 [P] [US3] `data/src/test/kotlin/…/db/WorkRelinkTest.kt` にテストを書く（**`Volume.workId` と全 `ShelfPlacement.workId` が同時に更新され、不整合が残らないこと** — data-model.md の関連）
+- [X] T060 [P] [US3] `domain/src/test/kotlin/…/usecase/LinkProvisionalWorkUseCaseTest.kt` にテストを書く（紐づけ後も読書状態・棚番号・メモが失われないこと — FR-008）
+- [X] T061 [P] [US3] `data/src/test/kotlin/…/db/WorkRelinkTest.kt` にテストを書く（**`Volume.workId` と全 `ShelfPlacement.workId` が同時に更新され、不整合が残らないこと** — data-model.md の関連）
 
 ### Implementation for User Story 3
 
-- [ ] T062 [US3] `data/src/main/kotlin/…/db/dao/WorkDao.kt` に作品の付け替えクエリを追加する（`Volume` と `ShelfPlacement` を同一トランザクションで更新する）
-- [ ] T063 [US3] `domain/src/main/kotlin/…/usecase/LinkProvisionalWorkUseCase.kt` を実装する
-- [ ] T064 [US3] `app/src/main/kotlin/…/ui/record/ProvisionalInputSection.kt` を実装する（暫定の作品名と巻数の入力 — FR-008）
-- [ ] T065 [US3] `app/src/main/kotlin/…/ui/record/LinkWorkScreen.kt` を実装する（暫定記録を正式な作品へ紐づける導線）
-- [ ] T066 [US3] `./gradlew assembleDebug` を確認する
+- [X] T062 [US3] `data/src/main/kotlin/…/db/dao/WorkDao.kt` に作品の付け替えクエリを追加する（`Volume` と `ShelfPlacement` を同一トランザクションで更新する）
+- [X] T063 [US3] `domain/src/main/kotlin/…/usecase/LinkProvisionalWorkUseCase.kt` を実装する
+- [X] T064 [US3] `app/src/main/kotlin/…/ui/record/ProvisionalInputSection.kt` を実装する（暫定の作品名と巻数の入力 — FR-008）
+- [X] T065 [US3] `app/src/main/kotlin/…/ui/record/LinkWorkScreen.kt` を実装する（暫定記録を正式な作品へ紐づける導線）
+- [X] T066 [US3] `./gradlew assembleDebug` を確認する
 
 **Checkpoint**: バーコードのない本も記録でき、後から正式化できる
 

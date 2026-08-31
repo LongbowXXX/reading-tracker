@@ -47,7 +47,12 @@ fun ConfirmScreen(
     ) {
         Text(text = "内容を確認して記録", style = MaterialTheme.typography.headlineSmall)
 
-        if (draft.bibliographyMissing) {
+        if (draft.isProvisional) {
+            Text(
+                text = "暫定の名前で記録します。覚えやすい呼び名で構いません。後から正式な作品へ紐づけられます。",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        } else if (draft.bibliographyMissing) {
             Text(
                 text = "書誌情報を取得できませんでした。手入力で記録できます。",
                 style = MaterialTheme.typography.bodyMedium,

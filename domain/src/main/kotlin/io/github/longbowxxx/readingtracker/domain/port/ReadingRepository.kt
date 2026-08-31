@@ -48,6 +48,16 @@ interface ReadingRepository {
      */
     suspend fun relinkVolumeToWork(volumeId: Long, newWorkId: Long)
 
+    /**
+     * 巻の書誌情報を更新する（FR-008 の紐づけ時、および FR-019 の修正時）。
+     * **巻の ID は変えない。** 読書記録と配架レコードは巻 ID で結ばれており、
+     * 更新によってそれらが失われてはならない。
+     */
+    suspend fun updateVolumeDetails(volumeId: Long, volumeNumber: Int?, isbn: Isbn?, displayTitle: String, publishedDate: String?)
+
+    /** 暫定名のまま残っている巻の一覧（FR-008 の紐づけ導線）。 */
+    suspend fun listProvisionalVolumes(): List<ProvisionalVolume>
+
     // ---- 読書記録（作品 × 巻に対して1つ。店舗をまたいで共有される） ----
 
     suspend fun findReading(volumeId: Long): ReadingSnapshot?
@@ -96,3 +106,6 @@ data class StoreWorkSnapshot(
     val placements: List<PlacementSnapshot>,
     val readings: List<ReadingSnapshot>,
 )
+
+/** 暫定名のまま残っている巻。正式な作品へ紐づけ直す対象（FR-008）。 */
+data class ProvisionalVolume(val volumeId: Long, val workId: Long, val workTitle: String, val displayTitle: String, val volumeNumber: Int?)

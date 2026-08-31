@@ -20,6 +20,7 @@ import io.github.longbowxxx.readingtracker.domain.model.ShelfNumber
 import io.github.longbowxxx.readingtracker.domain.model.Store
 import io.github.longbowxxx.readingtracker.domain.model.Volume
 import io.github.longbowxxx.readingtracker.domain.model.Work
+import io.github.longbowxxx.readingtracker.domain.port.ProvisionalVolume
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
 import io.github.longbowxxx.readingtracker.domain.port.StoreWorkSnapshot
 import java.time.Instant
@@ -87,6 +88,32 @@ constructor(
 
     override suspend fun relinkVolumeToWork(volumeId: Long, newWorkId: Long) {
         workDao.relinkVolumeToWork(volumeId, newWorkId)
+    }
+
+    override suspend fun updateVolumeDetails(
+        volumeId: Long,
+        volumeNumber: Int?,
+        isbn: Isbn?,
+        displayTitle: String,
+        publishedDate: String?,
+    ) {
+        volumeDao.updateDetails(
+            id = volumeId,
+            volumeNumber = volumeNumber,
+            isbn13 = isbn?.value,
+            displayTitle = displayTitle,
+            publishedDate = publishedDate,
+        )
+    }
+
+    override suspend fun listProvisionalVolumes(): List<ProvisionalVolume> = volumeDao.listProvisionalVolumes().map { row ->
+        ProvisionalVolume(
+            volumeId = row.volumeId,
+            workId = row.workId,
+            workTitle = row.workTitle,
+            displayTitle = row.displayTitle,
+            volumeNumber = row.volumeNumber,
+        )
     }
 
     override suspend fun findReading(volumeId: Long): ReadingSnapshot? {
