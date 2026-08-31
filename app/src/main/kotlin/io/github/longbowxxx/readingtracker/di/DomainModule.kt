@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
 import io.github.longbowxxx.readingtracker.domain.usecase.RecordVolumeUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.UpdateRecordUseCase
+import io.github.longbowxxx.readingtracker.domain.usecase.VisitListUseCase
 import javax.inject.Singleton
 
 /**
@@ -30,4 +31,8 @@ object DomainModule {
     @Singleton
     fun provideRecordVolumeUseCase(repository: ReadingRepository, updateRecordUseCase: UpdateRecordUseCase): RecordVolumeUseCase =
         RecordVolumeUseCase(repository, updateRecordUseCase)
+
+    @Provides
+    @Singleton
+    fun provideVisitListUseCase(repository: ReadingRepository): VisitListUseCase = VisitListUseCase(repository)
 }

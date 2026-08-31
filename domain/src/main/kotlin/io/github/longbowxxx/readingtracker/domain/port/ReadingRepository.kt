@@ -73,4 +73,26 @@ interface ReadingRepository {
 
     /** 指定店舗で記録のある作品の ID を返す（B-1 の絞り込み）。 */
     suspend fun listWorkIdsInStore(storeId: Long): List<Long>
+
+    /**
+     * 来店時の一覧に必要な情報を作品単位でまとめて返す（B-1, B-2, B-3）。
+     *
+     * 含めるのは**指定店舗で記録のある作品だけ**（FR-024）。配架レコードは指定店舗のものに
+     * 限られるが、**読書記録はその作品の全ての巻を含む**。読書状態は店舗をまたいで共有される
+     * ため、他店舗で読んだ巻も「次に読むべき巻」の判定に効かせる必要がある。
+     */
+    suspend fun listStoreWorkSnapshots(storeId: Long): List<StoreWorkSnapshot>
 }
+
+/**
+ * ある店舗における1作品分のスナップショット。
+ *
+ * @property placements 当該店舗・当該作品の配架レコードのみ
+ * @property readings 当該作品の読書記録（店舗によらない）
+ */
+data class StoreWorkSnapshot(
+    val workId: Long,
+    val workTitle: String,
+    val placements: List<PlacementSnapshot>,
+    val readings: List<ReadingSnapshot>,
+)

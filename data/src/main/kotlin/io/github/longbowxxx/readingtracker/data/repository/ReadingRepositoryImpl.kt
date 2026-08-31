@@ -21,6 +21,7 @@ import io.github.longbowxxx.readingtracker.domain.model.Store
 import io.github.longbowxxx.readingtracker.domain.model.Volume
 import io.github.longbowxxx.readingtracker.domain.model.Work
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
+import io.github.longbowxxx.readingtracker.domain.port.StoreWorkSnapshot
 import java.time.Instant
 import javax.inject.Inject
 
@@ -129,6 +130,45 @@ constructor(
     }
 
     override suspend fun listWorkIdsInStore(storeId: Long): List<Long> = shelfPlacementDao.listWorkIdsInStore(storeId)
+
+    override suspend fun listStoreWorkSnapshots(storeId: Long): List<StoreWorkSnapshot> {
+        // 2回の問い合わせで済ませる。作品ごとに引くと件数に比例して往復が増えるため
+        val placementRows = shelfPlacementDao.listStorePlacementRows(storeId)
+        val readingRows = readingRecordDao.listReadingsForStoreWorks(storeId)
+
+        val readingsByWork =
+            readingRows.groupBy(
+                keySelector = { it.workId },
+                valueTransform = {
+                    ReadingSnapshot(
+                        volumeId = it.volumeId,
+                        volumeNumber = it.volumeNumber,
+                        status = it.status,
+                        note = it.note,
+                        recordedAt = it.recordedAt,
+                    )
+                },
+            )
+
+        return placementRows
+            .groupBy { it.workId }
+            .map { (workId, rows) ->
+                StoreWorkSnapshot(
+                    workId = workId,
+                    workTitle = rows.first().workTitle,
+                    placements =
+                    rows.map { row ->
+                        PlacementSnapshot(
+                            volumeId = row.volumeId,
+                            volumeNumber = row.volumeNumber,
+                            shelfNumber = row.shelfNumber?.let(::ShelfNumber),
+                            updatedAt = row.updatedAt,
+                        )
+                    },
+                    readings = readingsByWork[workId].orEmpty(),
+                )
+            }
+    }
 }
 
 private fun WorkEntity.toDomain() = Work(

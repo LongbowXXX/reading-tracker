@@ -84,6 +84,27 @@ interface ReadingRecordDao {
     )
     suspend fun listByWork(workId: Long): List<ReadingRecordEntity>
 
+    /**
+     * 指定店舗で記録のある作品に属する、**すべての巻**の読書記録（B-3）。
+     *
+     * 読書状態は店舗をまたいで共有されるため、他店舗で読んだ巻も
+     * 「次に読むべき巻」の判定に含める必要がある。
+     */
+    @Query(
+        """
+        SELECT r.volumeId AS volumeId,
+               v.workId AS workId,
+               v.volumeNumber AS volumeNumber,
+               r.status AS status,
+               r.note AS note,
+               r.recordedAt AS recordedAt
+        FROM reading_records r
+        INNER JOIN volumes v ON v.id = r.volumeId
+        WHERE v.workId IN (SELECT DISTINCT workId FROM shelf_placements WHERE storeId = :storeId)
+        """,
+    )
+    suspend fun listReadingsForStoreWorks(storeId: Long): List<StoreReadingRow>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(record: ReadingRecordEntity): Long
 
@@ -117,6 +138,30 @@ interface ShelfPlacementDao {
     /** 指定店舗で記録のある作品の ID（B-1 の絞り込み。FR-024）。 */
     @Query("SELECT DISTINCT workId FROM shelf_placements WHERE storeId = :storeId")
     suspend fun listWorkIdsInStore(storeId: Long): List<Long>
+
+    /**
+     * 来店時の一覧のための集約（B-1, B-2）。
+     *
+     * 配架レコードに作品名と巻番号を突き合わせて返す。**指定店舗の行だけ**が対象であり、
+     * 他店舗の棚番号は決して混ざらない（FR-014, FR-024）。
+     * 棚番号が NULL の行も含める。行の存在がその店での記録を表すため（FR-017）。
+     */
+    @Query(
+        """
+        SELECT p.workId AS workId,
+               w.title AS workTitle,
+               p.volumeId AS volumeId,
+               v.volumeNumber AS volumeNumber,
+               p.shelfNumber AS shelfNumber,
+               p.updatedAt AS updatedAt
+        FROM shelf_placements p
+        INNER JOIN works w ON w.id = p.workId
+        INNER JOIN volumes v ON v.id = p.volumeId
+        WHERE p.storeId = :storeId
+        ORDER BY w.title, v.volumeNumber
+        """,
+    )
+    suspend fun listStorePlacementRows(storeId: Long): List<StorePlacementRow>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(placement: ShelfPlacementEntity): Long

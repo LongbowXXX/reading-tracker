@@ -122,17 +122,17 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T051 [P] [US2] `data/src/test/kotlin/…/db/VisitListQueryTest.kt` に一覧クエリのテストを書く（**選択店舗の記録のみが出る／他店舗のみで記録した作品が出ない／棚番号が未入力の作品も出る／巻番号が NULL の暫定記録のみの作品も一覧に現れ、次に読むべき巻が示されないこと** — FR-022, FR-023 末尾, FR-024, SC-007／記録0件でも破綻しない）
-- [ ] T052 [P] [US2] `domain/src/test/kotlin/…/usecase/VisitListUseCaseTest.kt` にユースケースのテストを書く（各作品に `resolveNextVolume()` の結果が付くこと）
+- [X] T051 [P] [US2] `data/src/test/kotlin/…/db/VisitListQueryTest.kt` に一覧クエリのテストを書く（**選択店舗の記録のみが出る／他店舗のみで記録した作品が出ない／棚番号が未入力の作品も出る／巻番号が NULL の暫定記録のみの作品も一覧に現れ、次に読むべき巻が示されないこと** — FR-022, FR-023 末尾, FR-024, SC-007／記録0件でも破綻しない）
+- [X] T052 [P] [US2] `domain/src/test/kotlin/…/usecase/VisitListUseCaseTest.kt` にユースケースのテストを書く（各作品に `resolveNextVolume()` の結果が付くこと）
 
 ### Implementation for User Story 2
 
-- [ ] T053 [US2] `data/src/main/kotlin/…/db/dao/ShelfPlacementDao.kt` に店舗ごとの作品集約クエリを追加する（配架レコードから作品を集約し、棚番号と読書記録を併せて取得する）
-- [ ] T054 [US2] `domain/src/main/kotlin/…/usecase/VisitListUseCase.kt` を実装する（作品ごとに棚番号と次に読むべき巻を組み立てる）
-- [ ] T055 [US2] `app/src/main/kotlin/…/ui/visit/VisitViewModel.kt` を実装する
-- [ ] T056 [US2] `app/src/main/kotlin/…/ui/visit/StoreSelectScreen.kt` を実装する（店舗の選択。**3操作以内で一覧へ到達すること** — SC-003）
-- [ ] T057 [US2] `app/src/main/kotlin/…/ui/visit/VisitListScreen.kt` を実装する（棚番号を併記し、**未入力であることが分かる表示**にする。次に読むべき巻を示す — FR-022, FR-023）
-- [ ] T058 [US2] `app/src/main/kotlin/…/ui/visit/EmptyState.kt` に記録0件時の表示を実装する
+- [X] T053 [US2] `data/src/main/kotlin/…/db/dao/ShelfPlacementDao.kt` に店舗ごとの作品集約クエリを追加する（配架レコードから作品を集約し、棚番号と読書記録を併せて取得する）
+- [X] T054 [US2] `domain/src/main/kotlin/…/usecase/VisitListUseCase.kt` を実装する（作品ごとに棚番号と次に読むべき巻を組み立てる）
+- [X] T055 [US2] `app/src/main/kotlin/…/ui/visit/VisitViewModel.kt` を実装する
+- [X] T056 [US2] `app/src/main/kotlin/…/ui/visit/StoreSelectScreen.kt` を実装する（店舗の選択。**3操作以内で一覧へ到達すること** — SC-003）
+- [X] T057 [US2] `app/src/main/kotlin/…/ui/visit/VisitListScreen.kt` を実装する（棚番号を併記し、**未入力であることが分かる表示**にする。次に読むべき巻を示す — FR-022, FR-023）
+- [X] T058 [US2] `app/src/main/kotlin/…/ui/visit/EmptyState.kt` に記録0件時の表示を実装する
 - [ ] T059 [US2] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.5 を実施する
 
 **Checkpoint**: User Story 1 と 2 がそれぞれ独立して動作する

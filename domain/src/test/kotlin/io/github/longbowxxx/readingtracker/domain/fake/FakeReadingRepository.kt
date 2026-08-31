@@ -11,6 +11,7 @@ import io.github.longbowxxx.readingtracker.domain.model.Store
 import io.github.longbowxxx.readingtracker.domain.model.Volume
 import io.github.longbowxxx.readingtracker.domain.model.Work
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
+import io.github.longbowxxx.readingtracker.domain.port.StoreWorkSnapshot
 import java.time.Instant
 
 /**
@@ -128,6 +129,17 @@ class FakeReadingRepository : ReadingRepository {
 
     override suspend fun listWorkIdsInStore(storeId: Long): List<Long> =
         placements.values.filter { it.storeId == storeId }.map { it.workId }.distinct()
+
+    override suspend fun listStoreWorkSnapshots(storeId: Long): List<StoreWorkSnapshot> = listWorkIdsInStore(storeId).mapNotNull { workId ->
+        val work = works.firstOrNull { it.id == workId } ?: return@mapNotNull null
+        StoreWorkSnapshot(
+            workId = workId,
+            workTitle = work.title,
+            placements = listPlacements(storeId, workId),
+            // 読書状態は店舗をまたいで共有されるため、作品の全ての巻を渡す
+            readings = listReadingsByWork(workId),
+        )
+    }
 
     /** テストからの検証用。指定店舗の配架レコード件数。 */
     fun placementCount(storeId: Long): Int = placements.values.count { it.storeId == storeId }

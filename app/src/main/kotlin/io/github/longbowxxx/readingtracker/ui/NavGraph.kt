@@ -1,27 +1,72 @@
 package io.github.longbowxxx.readingtracker.ui
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.longbowxxx.readingtracker.ui.record.RecordScreen
+import io.github.longbowxxx.readingtracker.ui.visit.VisitScreen
 
-/** 画面の宛先。来店時の参照（US2）は Phase 4 で追加する。 */
+/** 画面の宛先。 */
 object Destinations {
+    /** 記録する（User Story 1）。個室で本を手に持った状態で使う。 */
     const val RECORD = "record"
+
+    /** 来店時に読める続きを見る（User Story 2）。 */
+    const val VISIT = "visit"
 }
+
+private data class TabItem(val route: String, val label: String)
+
+private val tabs =
+    listOf(
+        TabItem(Destinations.RECORD, "記録する"),
+        TabItem(Destinations.VISIT, "この店で読む"),
+    )
 
 @Composable
 fun ReadingTrackerNavGraph(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
-    NavHost(
-        navController = navController,
-        startDestination = Destinations.RECORD,
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    Scaffold(
         modifier = modifier,
-    ) {
-        composable(Destinations.RECORD) {
-            RecordScreen()
+        bottomBar = {
+            NavigationBar {
+                tabs.forEach { tab ->
+                    NavigationBarItem(
+                        selected = currentRoute == tab.route,
+                        onClick = {
+                            if (currentRoute != tab.route) {
+                                navController.navigate(tab.route) {
+                                    popUpTo(Destinations.RECORD) { inclusive = tab.route == Destinations.RECORD }
+                                    launchSingleTop = true
+                                }
+                            }
+                        },
+                        icon = {},
+                        label = { Text(tab.label) },
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Destinations.RECORD,
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            composable(Destinations.RECORD) { RecordScreen() }
+            composable(Destinations.VISIT) { VisitScreen() }
         }
     }
 }
