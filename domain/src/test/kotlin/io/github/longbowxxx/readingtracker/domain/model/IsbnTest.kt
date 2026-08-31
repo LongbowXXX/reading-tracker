@@ -100,5 +100,19 @@ class IsbnTest {
         fun `X が末尾以外にあれば拒否する`() {
             assertTrue(Isbn.parse("48X152069X").isFailure)
         }
+
+        @Test
+        @DisplayName("バーコード下段の日本図書コード（192 始まり）を ISBN として受け付けない")
+        fun `978 でも 979 でもない13桁は拒否する`() {
+            // 1920979018006 は書籍バーコード下段の分類・価格コード。EAN-13 としては成立する
+            val result = Isbn.parse("1920979018006")
+            assertTrue(result.isFailure)
+            assertInstanceOf(IsbnFormatException.InvalidPrefix::class.java, result.exceptionOrNull())
+        }
+
+        @Test
+        fun `979 で始まる ISBN は受け付ける`() {
+            assertTrue(Isbn.parse("9791234567896").isSuccess)
+        }
     }
 }

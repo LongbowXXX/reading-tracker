@@ -26,7 +26,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 **Purpose**: Gradle マルチモジュールの骨格を作り、空のアプリがビルドできる状態にする。あわせて、UI の骨格に関わる未確定事項を先に潰す
 
-- [ ] T001 [P] **実店舗で**、棚番号シールがバーコードを覆う頻度をコミック数冊分観察し、結果を記録する（要求定義書 9. 未確定事項）。コードに依存しないため他タスクと並行してよいが、**記録画面の実装（T045）に着手する前に完了させること。** 覆う頻度が高い場合、手入力を主導線とする組み替えを検討する
+- [X] T001 [P] 主導線の方針を確定した（2026-08-31）。**バーコード読み取りを主導線とする。** なお実店舗での観察（棚番号シールがバーコードを覆う頻度。要求定義書 9. 未確定事項）は**実施していない**。利用者の判断による決定であり、観察の結果ではない。実運用で覆われる頻度が高いと分かった場合は、T045 の導線を手入力主体へ組み替える
 - [X] T002 Gradle Wrapper を生成し `gradlew` / `gradlew.bat` / `gradle/wrapper/gradle-wrapper.properties` を配置する
 - [X] T003 `settings.gradle.kts` に `:app` / `:data` / `:domain` を宣言し、ルート `build.gradle.kts` にプラグインの版を集約する
 - [X] T004 `gradle/libs.versions.toml` にバージョンカタログを定義する（AGP, Kotlin, KSP, Compose BOM, Room, Hilt, OkHttp, kotlinx.serialization, play-services-code-scanner, JUnit 5, **Robolectric, JUnit 4**）
@@ -86,28 +86,28 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T031 [P] [US1] `data/src/test/kotlin/…/bibliography/ChainedBibliographySourceTest.kt` に連鎖規則のテストを書く（`Found` で打ち切り／`NotFound` で次経路へ／`Unavailable` で次経路へ／全て尽きた場合の戻り値。フェイク実装を用い**ネットワークへアクセスしないこと**）
-- [ ] T032 [P] [US1] `data/src/test/kotlin/…/bibliography/OpenBdParserTest.kt` に openBD 応答のパーステストを書く（サンプル JSON をリソースに固定。該当なしの `null` 要素を `NotFound` に写像すること）
-- [ ] T033 [P] [US1] `data/src/test/kotlin/…/bibliography/NdlParserTest.kt` に NDL SRU 応答のパーステストを書く（サンプル XML をリソースに固定。ヒット0件を `NotFound` に写像すること）
-- [ ] T034 [P] [US1] `domain/src/test/kotlin/…/usecase/RecordVolumeUseCaseTest.kt` にテストを書く（棚番号が初期値として提示される／棚番号未入力でも保存できる／既存記録がある場合は新規作成しない／**同一の巻を別の店舗で記録した場合、読書記録は1件のまま更新され、配架レコードが店舗ごとに作られること** — spec.md Edge Cases）
-- [ ] T035 [P] [US1] `domain/src/test/kotlin/…/usecase/UpdateRecordUseCaseTest.kt` にテストを書く（**同一店舗で同じ巻を再度記録すると、新規作成されず既存記録が編集対象になること** — FR-029／中断→読了の更新が次巻判定に反映されること／**READ ⇄ PAUSED の遷移に制限がないこと** — 憲法 原則III「読書状態の遷移」）
+- [X] T031 [P] [US1] `data/src/test/kotlin/…/bibliography/ChainedBibliographySourceTest.kt` に連鎖規則のテストを書く（`Found` で打ち切り／`NotFound` で次経路へ／`Unavailable` で次経路へ／全て尽きた場合の戻り値。フェイク実装を用い**ネットワークへアクセスしないこと**）
+- [X] T032 [P] [US1] `data/src/test/kotlin/…/bibliography/OpenBdParserTest.kt` に openBD 応答のパーステストを書く（サンプル JSON をリソースに固定。該当なしの `null` 要素を `NotFound` に写像すること）
+- [X] T033 [P] [US1] `data/src/test/kotlin/…/bibliography/NdlParserTest.kt` に NDL SRU 応答のパーステストを書く（サンプル XML をリソースに固定。ヒット0件を `NotFound` に写像すること）
+- [X] T034 [P] [US1] `domain/src/test/kotlin/…/usecase/RecordVolumeUseCaseTest.kt` にテストを書く（棚番号が初期値として提示される／棚番号未入力でも保存できる／既存記録がある場合は新規作成しない／**同一の巻を別の店舗で記録した場合、読書記録は1件のまま更新され、配架レコードが店舗ごとに作られること** — spec.md Edge Cases）
+- [X] T035 [P] [US1] `domain/src/test/kotlin/…/usecase/UpdateRecordUseCaseTest.kt` にテストを書く（**同一店舗で同じ巻を再度記録すると、新規作成されず既存記録が編集対象になること** — FR-029／中断→読了の更新が次巻判定に反映されること／**READ ⇄ PAUSED の遷移に制限がないこと** — 憲法 原則III「読書状態の遷移」）
 
 ### Implementation for User Story 1
 
-- [ ] T036 [P] [US1] `data/src/main/kotlin/…/bibliography/OpenBdBibliographySource.kt` を実装する（`https://api.openbd.jp/v1/get?isbn=`、kotlinx.serialization、3秒タイムアウト）
-- [ ] T037 [P] [US1] `data/src/main/kotlin/…/bibliography/NdlBibliographySource.kt` を実装する（`https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&query=isbn=`、`XmlPullParser`、3秒タイムアウト）
-- [ ] T038 [US1] `data/src/main/kotlin/…/bibliography/ChainedBibliographySource.kt` を実装する（openBD → NDL の順、全体6秒の上限。**例外を投げず `Unavailable` を返すこと**）
-- [ ] T039 [US1] `data/src/main/kotlin/…/di/BibliographyModule.kt` で `BibliographySource` を連鎖として提供する
-- [ ] T040 [P] [US1] `app/src/main/kotlin/…/scanner/GoogleCodeScannerBarcodeScanner.kt` に `BarcodeScanner` を実装する（`play-services-code-scanner`。EAN-13 の上段のみを対象とし、`192` で始まる日本図書コードは読み捨てる）
-- [ ] T041 [US1] `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` を実装する（作品の自動照合 → 巻の作成/取得 → 読書記録の保存 → 配架レコードの保存。**棚番号が未入力でも配架レコードを作ること** — FR-017 と FR-024 の両立）
-- [ ] T042 [US1] `domain/src/main/kotlin/…/usecase/UpdateRecordUseCase.kt` を実装する（既存記録の読書状態・棚番号・メモを更新する）
-- [ ] T043 [US1] `RecordVolumeUseCase` から `UpdateRecordUseCase` への分岐を `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` に組み込む（既存記録がある場合は編集へ — FR-029）
-- [ ] T044 [US1] `app/src/main/kotlin/…/ui/record/RecordViewModel.kt` を実装する（入力状態、棚番号の初期値提示、保存）
-- [ ] T045 [US1] `app/src/main/kotlin/…/ui/record/RecordScreen.kt` を実装する（**バーコード読み取りと ISBN 手入力を1操作で相互に切り替えられること**。手入力をエラー経路として扱わない — FR-003, SC-002。**T001 の観察結果を反映して主導線を決めること**）
-- [ ] T046 [US1] `app/src/main/kotlin/…/ui/record/ConfirmScreen.kt` を実装する（書誌情報の確認・修正、読書状態の選択、棚番号の入力、メモ。取得失敗時は手入力へ直行する — FR-006, FR-007）
-- [ ] T047 [US1] `app/src/main/kotlin/…/ui/record/StorePickerSection.kt` を実装する（店舗の選択と、**選択欄からの店舗名入力による新規登録** — FR-030。編集・削除は作らない — FR-031）
-- [ ] T048 [US1] `app/src/main/kotlin/…/ui/record/CameraPermission.kt` にカメラ権限の要求を実装する（拒否時は手入力へ落とす）
-- [ ] T049 [US1] `app/src/main/kotlin/…/ui/NavGraph.kt` と `MainActivity.kt` に画面遷移を配線する
+- [X] T036 [P] [US1] `data/src/main/kotlin/…/bibliography/OpenBdBibliographySource.kt` を実装する（`https://api.openbd.jp/v1/get?isbn=`、kotlinx.serialization、3秒タイムアウト）
+- [X] T037 [P] [US1] `data/src/main/kotlin/…/bibliography/NdlBibliographySource.kt` を実装する（`https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&query=isbn=`、`XmlPullParser`、3秒タイムアウト）
+- [X] T038 [US1] `data/src/main/kotlin/…/bibliography/ChainedBibliographySource.kt` を実装する（openBD → NDL の順、全体6秒の上限。**例外を投げず `Unavailable` を返すこと**）
+- [X] T039 [US1] `data/src/main/kotlin/…/di/BibliographyModule.kt` で `BibliographySource` を連鎖として提供する
+- [X] T040 [P] [US1] `app/src/main/kotlin/…/scanner/GoogleCodeScannerBarcodeScanner.kt` に `BarcodeScanner` を実装する（`play-services-code-scanner`。EAN-13 の上段のみを対象とし、`192` で始まる日本図書コードは読み捨てる）
+- [X] T041 [US1] `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` を実装する（作品の自動照合 → 巻の作成/取得 → 読書記録の保存 → 配架レコードの保存。**棚番号が未入力でも配架レコードを作ること** — FR-017 と FR-024 の両立）
+- [X] T042 [US1] `domain/src/main/kotlin/…/usecase/UpdateRecordUseCase.kt` を実装する（既存記録の読書状態・棚番号・メモを更新する）
+- [X] T043 [US1] `RecordVolumeUseCase` から `UpdateRecordUseCase` への分岐を `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` に組み込む（既存記録がある場合は編集へ — FR-029）
+- [X] T044 [US1] `app/src/main/kotlin/…/ui/record/RecordViewModel.kt` を実装する（入力状態、棚番号の初期値提示、保存）
+- [X] T045 [US1] `app/src/main/kotlin/…/ui/record/RecordScreen.kt` を実装する（**バーコード読み取りと ISBN 手入力を1操作で相互に切り替えられること**。手入力をエラー経路として扱わない — FR-003, SC-002。**T001 の観察結果を反映して主導線を決めること**）
+- [X] T046 [US1] `app/src/main/kotlin/…/ui/record/ConfirmScreen.kt` を実装する（書誌情報の確認・修正、読書状態の選択、棚番号の入力、メモ。取得失敗時は手入力へ直行する — FR-006, FR-007）
+- [X] T047 [US1] `app/src/main/kotlin/…/ui/record/StorePickerSection.kt` を実装する（店舗の選択と、**選択欄からの店舗名入力による新規登録** — FR-030。編集・削除は作らない — FR-031）
+- [X] T048 [US1] `app/src/main/kotlin/…/ui/record/CameraPermission.kt` にカメラ権限の要求を実装する（拒否時は手入力へ落とす）
+- [X] T049 [US1] `app/src/main/kotlin/…/ui/NavGraph.kt` と `MainActivity.kt` に画面遷移を配線する
 - [ ] T050 [US1] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.1・4.2・4.4 を実施する。**あわせて FR-028（自動照合が通常経路で追加操作を要求しないこと）を確認する**（暗所での読み取りは T073 で扱う）
 
 **Checkpoint**: User Story 1 が単独で動作し、記録の作成と更新ができる（MVP）

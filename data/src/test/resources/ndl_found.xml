@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<searchRetrieveResponse xmlns="http://www.loc.gov/zing/srw/">
+  <version>1.2</version>
+  <numberOfRecords>1</numberOfRecords>
+  <records>
+    <record>
+      <recordSchema>dcndl</recordSchema>
+      <recordPacking>xml</recordPacking>
+      <recordData>
+        <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                 xmlns:dcterms="http://purl.org/dc/terms/"
+                 xmlns:dcndl="http://ndl.go.jp/dcndl/terms/">
+          <dcndl:BibResource>
+            <dcterms:title>ONE PIECE</dcterms:title>
+            <dcndl:volume>87</dcndl:volume>
+            <dcterms:creator>尾田栄一郎 著</dcterms:creator>
+            <dcterms:publisher>集英社</dcterms:publisher>
+            <dcterms:date>2017.12</dcterms:date>
+          </dcndl:BibResource>
+        </rdf:RDF>
+      </recordData>
+    </record>
+  </records>
+</searchRetrieveResponse>

@@ -11,6 +11,9 @@ value class Isbn private constructor(val value: String) {
     override fun toString(): String = value
 
     companion object {
+        /** 13桁 ISBN として認める接頭辞。書籍以外の EAN-13 を弾く。 */
+        private val VALID_PREFIXES = listOf("978", "979")
+
         /**
          * 生の入力文字列から ISBN を作る。ハイフンと空白は除去してから判定する（FR-004）。
          *
@@ -30,6 +33,12 @@ value class Isbn private constructor(val value: String) {
         private fun parseIsbn13(normalized: String): Result<Isbn> {
             if (!normalized.all { it.isDigit() }) {
                 return Result.failure(IsbnFormatException.InvalidCharacter(normalized))
+            }
+            // 書籍バーコードは上段が ISBN（978/979 で始まる）、下段が日本図書コード（192 で始まる）。
+            // 下段も13桁でチェックディジットが成立するため、接頭辞で弾かないと価格コードを
+            // ISBN として取り込んでしまう（contracts/barcode-scanner.md）
+            if (!VALID_PREFIXES.any { normalized.startsWith(it) }) {
+                return Result.failure(IsbnFormatException.InvalidPrefix(normalized))
             }
             val digits = normalized.map { it - '0' }
             if (digits[12] != checkDigit13(digits.subList(0, 12))) {
@@ -81,4 +90,10 @@ sealed class IsbnFormatException(message: String) : IllegalArgumentException(mes
 
     /** チェックディジットが一致しない。入力の打ち間違いを検出する。 */
     class InvalidCheckDigit(val input: String) : IsbnFormatException("ISBN のチェックディジットが一致しません: $input")
+
+    /**
+     * 13桁だが 978/979 で始まらない。書籍バーコード下段の日本図書コード（192 始まり）を
+     * 読み取った場合にここへ来る。
+     */
+    class InvalidPrefix(val input: String) : IsbnFormatException("書籍の ISBN ではありません（上段のバーコードを読み取ってください）: $input")
 }
