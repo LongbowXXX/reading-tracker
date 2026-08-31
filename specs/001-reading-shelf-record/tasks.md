@@ -108,7 +108,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 - [X] T047 [US1] `app/src/main/kotlin/…/ui/record/StorePickerSection.kt` を実装する（店舗の選択と、**選択欄からの店舗名入力による新規登録** — FR-030。編集・削除は作らない — FR-031）
 - [X] T048 [US1] `app/src/main/kotlin/…/ui/record/CameraPermission.kt` にカメラ権限の要求を実装する（拒否時は手入力へ落とす）
 - [X] T049 [US1] `app/src/main/kotlin/…/ui/NavGraph.kt` と `MainActivity.kt` に画面遷移を配線する
-- [ ] T050 [US1] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.1・4.2・4.4 を実施する。**あわせて FR-028（自動照合が通常経路で追加操作を要求しないこと）を確認する**（暗所での読み取りは T073 で扱う）
+- [X] T050 [US1] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.1・4.2・4.4 を実施した（2026-08-31）。**不具合を1件検出し、[issue #1](https://github.com/LongbowXXX/reading-tracker/issues/1) として登録した**（下段のバーコードを読むとエラーで終了し、上段を読み直せない）。修正は本スコープでは行わない
 
 **Checkpoint**: User Story 1 が単独で動作し、記録の作成と更新ができる（MVP）
 
@@ -133,7 +133,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 - [X] T056 [US2] `app/src/main/kotlin/…/ui/visit/StoreSelectScreen.kt` を実装する（店舗の選択。**3操作以内で一覧へ到達すること** — SC-003）
 - [X] T057 [US2] `app/src/main/kotlin/…/ui/visit/VisitListScreen.kt` を実装する（棚番号を併記し、**未入力であることが分かる表示**にする。次に読むべき巻を示す — FR-022, FR-023）
 - [X] T058 [US2] `app/src/main/kotlin/…/ui/visit/EmptyState.kt` に記録0件時の表示を実装する
-- [ ] T059 [US2] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.5 を実施する
+- [X] T059 [US2] `./gradlew assembleDebug` を確認し、**実機で** [quickstart.md](./quickstart.md) 4.5 を実施する
 
 **Checkpoint**: User Story 1 と 2 がそれぞれ独立して動作する
 
