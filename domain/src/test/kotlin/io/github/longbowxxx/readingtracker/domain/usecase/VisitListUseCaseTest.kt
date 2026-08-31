@@ -163,6 +163,37 @@ class VisitListUseCaseTest {
     }
 
     @Test
+    @DisplayName("一覧から開く記録は、中断中の巻を対象にする")
+    fun `中断中の巻を編集対象にする`() = runTest {
+        val store = repository.createStore("A店")
+        record(store.id, "ONE PIECE 12", ReadingStatus.READ, "A-12")
+        val paused = record(store.id, "ONE PIECE 13", ReadingStatus.PAUSED, "A-12")
+
+        assertEquals(paused.volumeId, useCase.execute(store.id).single().editableVolumeId)
+    }
+
+    @Test
+    fun `中断中の巻が無ければ巻番号が最大の巻を編集対象にする`() = runTest {
+        val store = repository.createStore("A店")
+        val latest = record(store.id, "ONE PIECE 13", ReadingStatus.READ, "A-12")
+        // 後から前の巻を記録しても、対象は巻番号が最大の13巻のまま
+        record(store.id, "ONE PIECE 12", ReadingStatus.READ, "A-12")
+
+        assertEquals(latest.volumeId, useCase.execute(store.id).single().editableVolumeId)
+    }
+
+    @Test
+    fun `他店舗で中断した巻は編集対象にしない`() = runTest {
+        val storeA = repository.createStore("A店")
+        val storeB = repository.createStore("B店")
+        val atA = record(storeA.id, "ONE PIECE 12", ReadingStatus.READ, "A-12")
+        record(storeB.id, "ONE PIECE 13", ReadingStatus.PAUSED, "C-07")
+
+        // A店の一覧から開けるのは、A店に配架記録のある巻だけ
+        assertEquals(atA.volumeId, useCase.execute(storeA.id).single().editableVolumeId)
+    }
+
+    @Test
     fun `複数の作品が並ぶ`() = runTest {
         val store = repository.createStore("A店")
         record(store.id, "ONE PIECE 12", shelfNumber = "A-12")

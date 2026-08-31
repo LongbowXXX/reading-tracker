@@ -12,8 +12,16 @@ import io.github.longbowxxx.readingtracker.domain.shelf.resolveInheritedShelfNum
  * 来店時の一覧の1行（B-1, B-2, B-3）。
  *
  * @property shelfNumber **[nextVolume] を探すための棚番号**。null は未入力（FR-022）
+ * @property editableVolumeId 一覧から記録を開くときに対象とする巻（FR-019）。
+ *   中断中の巻があればその巻、無ければ当該店舗で最後に記録した巻
  */
-data class VisitListItem(val workId: Long, val workTitle: String, val shelfNumber: ShelfNumber?, val nextVolume: NextVolume)
+data class VisitListItem(
+    val workId: Long,
+    val workTitle: String,
+    val shelfNumber: ShelfNumber?,
+    val nextVolume: NextVolume,
+    val editableVolumeId: Long?,
+)
 
 /**
  * 選んだ店舗で読める読みかけ作品を一覧する（User Story 2）。
@@ -34,8 +42,32 @@ class VisitListUseCase(private val repository: ReadingRepository) {
             workTitle = snapshot.workTitle,
             shelfNumber = resolveShelfNumberFor(nextVolume, snapshot),
             nextVolume = nextVolume,
+            editableVolumeId = resolveEditableVolumeId(nextVolume, snapshot),
         )
     }
+
+    /**
+     * 一覧から記録を開くときの対象（FR-019）。
+     *
+     * 中断中の巻があればそれ。無ければ当該店舗で記録済みの巻のうち巻番号が最大のもの。
+     * 「中断した巻を読み切った」を一覧から直接直せるようにするための選択。
+     *
+     * 記録日時ではなく巻番号を先に見るのは、同一の操作でまとめて記録した場合に
+     * 日時が並んでしまい対象が定まらないため。
+     */
+    private fun resolveEditableVolumeId(nextVolume: NextVolume, snapshot: StoreWorkSnapshot): Long? = when (nextVolume) {
+        is NextVolume.Paused ->
+            nextVolume.volumeId.takeIf { id -> snapshot.placements.any { it.volumeId == id } }
+                ?: lastPlacedVolumeId(snapshot)
+
+        else -> lastPlacedVolumeId(snapshot)
+    }
+
+    private fun lastPlacedVolumeId(snapshot: StoreWorkSnapshot): Long? = snapshot.placements
+        .filter { it.volumeNumber != null }
+        .maxByOrNull { checkNotNull(it.volumeNumber) }
+        ?.volumeId
+        ?: snapshot.placements.maxByOrNull { it.updatedAt }?.volumeId
 
     /**
      * 次に読むべき巻を探すための棚番号を決める。

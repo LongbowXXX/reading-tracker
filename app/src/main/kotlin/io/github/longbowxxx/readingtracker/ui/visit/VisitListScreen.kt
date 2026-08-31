@@ -1,5 +1,6 @@
 package io.github.longbowxxx.readingtracker.ui.visit
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,7 +32,11 @@ import io.github.longbowxxx.readingtracker.domain.usecase.VisitListItem
  * その次に読むべき巻を探すための番号である（長期連載では巻によって棚が分かれるため）。
  */
 @Composable
-fun VisitScreen(modifier: Modifier = Modifier, viewModel: VisitViewModel = hiltViewModel()) {
+fun VisitScreen(
+    onOpenRecord: (volumeId: Long, storeId: Long) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: VisitViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // 記録して戻ってきたときに古い一覧を見せない。画面へ戻るたびに引き直す
@@ -65,15 +70,24 @@ fun VisitScreen(modifier: Modifier = Modifier, viewModel: VisitViewModel = hiltV
 
             else ->
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(state.items, key = { it.workId }) { item -> VisitListRow(item) }
+                    items(state.items, key = { it.workId }) { item ->
+                        VisitListRow(
+                            item = item,
+                            onOpen = {
+                                val volumeId = item.editableVolumeId
+                                val storeId = state.selectedStoreId
+                                if (volumeId != null && storeId != null) onOpenRecord(volumeId, storeId)
+                            },
+                        )
+                    }
                 }
         }
     }
 }
 
 @Composable
-private fun VisitListRow(item: VisitListItem) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun VisitListRow(item: VisitListItem, onOpen: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen)) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),

@@ -118,12 +118,9 @@ fun ConfirmScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-
-        OutlinedTextField(
-            value = draft.note,
-            onValueChange = { value -> onDraftChange { it.copy(note = value) } },
-            label = { Text("メモ（中断位置の覚書、感想など）") },
-            modifier = Modifier.fillMaxWidth(),
+        NoteEditor(
+            note = draft.note,
+            onNoteChange = { value -> onDraftChange { it.copy(note = value) } },
         )
 
         Button(onClick = onSave, modifier = Modifier.fillMaxWidth()) {

@@ -172,9 +172,9 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ### Implementation for User Story 4
 
-- [ ] T067 [US4] `app/src/main/kotlin/…/ui/record/RecordDetailScreen.kt` を実装する（記録の確認・修正 — FR-019。`UpdateRecordUseCase` を呼ぶ）
-- [ ] T068 [US4] `app/src/main/kotlin/…/ui/record/NoteEditor.kt` にメモの入力・編集を実装する（FR-020）
-- [ ] T069 [US4] `./gradlew assembleDebug` を確認する
+- [X] T067 [US4] `app/src/main/kotlin/…/ui/record/RecordDetailScreen.kt` を実装する（記録の確認・修正 — FR-019。`UpdateRecordUseCase` を呼ぶ）
+- [X] T068 [US4] `app/src/main/kotlin/…/ui/record/NoteEditor.kt` にメモの入力・編集を実装する（FR-020）
+- [X] T069 [US4] `./gradlew assembleDebug` を確認する
 
 **Checkpoint**: 全ユーザーストーリーがそれぞれ独立して動作する
 
