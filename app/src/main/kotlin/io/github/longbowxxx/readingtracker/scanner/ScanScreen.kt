@@ -74,8 +74,19 @@ fun ScanScreen(onScanned: (Isbn) -> Unit, onCameraUnavailable: (Throwable) -> Un
             )
         val providerFuture = ProcessCameraProvider.getInstance(context)
         var boundProvider: ProcessCameraProvider? = null
+        // Future の解決前に画面を離脱する競合に対応するための破棄フラグ。
+        // addListener と onDispose はどちらも mainExecutor（メインスレッド）上で動くため、
+        // このフラグへのアクセスに追加の同期は要らない
+        var disposed = false
 
         providerFuture.addListener({
+            if (disposed) {
+                // 束縛前に効果が破棄済み。analysisExecutor は shutdown 済み、barcodeScanner は
+                // close 済みのため、ここで束縛すると壊れた状態で bindToLifecycle を呼んでしまう。
+                // 取得できたプロバイダは何も束縛せず、念のため解放だけして抜ける
+                runCatching { providerFuture.get() }.getOrNull()?.unbindAll()
+                return@addListener
+            }
             try {
                 val provider = providerFuture.get()
                 boundProvider = provider
@@ -111,12 +122,16 @@ fun ScanScreen(onScanned: (Isbn) -> Unit, onCameraUnavailable: (Throwable) -> Un
                     )
             } catch (e: Exception) {
                 // カメラを開けない理由は端末とタイミングに依る。契約どおり例外は投げず、
-                // 呼び出し側が手入力へ落とせるように通知する
-                onCameraUnavailable(e)
+                // 呼び出し側が手入力へ落とせるように通知する。ただし画面を離脱済みなら
+                // 呼び出し先は既にないので通知しない
+                if (!disposed) {
+                    onCameraUnavailable(e)
+                }
             }
         }, mainExecutor)
 
         onDispose {
+            disposed = true
             boundProvider?.unbindAll()
             analysisExecutor.shutdown()
             barcodeScanner.close()

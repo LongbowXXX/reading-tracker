@@ -14,7 +14,13 @@ import com.google.mlkit.vision.barcode.BarcodeScanner as MlKitBarcodeScanner
  * 日本図書コード（192 始まり）を読んでも、エラーを出さず読み取りを止めない。
  * 何が採用できるかの判定は [selectIsbn] が持つ。
  *
- * [onIsbn] はカメラの解析スレッドから呼ばれる。UI の更新は呼び出し側でメインスレッドへ移すこと。
+ * [onIsbn] の呼び出しスレッドは `analyze` を呼んだカメラの解析スレッドではない。`process` が返す
+ * `Task` の `addOnSuccessListener` / `addOnCompleteListener` に Executor を渡していないため、
+ * これらは既定でメインスレッド上で実行され、[onIsbn] もそこから呼ばれる。そのため呼び出し側で
+ * 改めてメインスレッドへ移す必要は現状ない。ただし、これはリスナーへ Executor を渡していないことに
+ * 依存する実装都合であり、将来 Executor 付きのリスナーに変更されると呼び出しスレッドは変わりうる。
+ * 呼び出し側がメインスレッドへの移動を自前で行っておく（[ScanScreen] の
+ * `mainExecutor.execute { onScanned(isbn) }` のように）のは、その変化に対して壊れないための安全策である。
  * 複数フレームで成立しうるため、**[onIsbn] は複数回呼ばれうる**。1度だけ扱う責任は呼び出し側にある。
  *
  * @param scanner ML Kit のバーコード検出器。生成と破棄は呼び出し側が持つ
