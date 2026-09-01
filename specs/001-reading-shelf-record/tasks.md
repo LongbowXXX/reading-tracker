@@ -29,7 +29,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 - [X] T001 [P] 主導線の方針を確定した（2026-08-31）。**バーコード読み取りを主導線とする。** なお実店舗での観察（棚番号シールがバーコードを覆う頻度。要求定義書 9. 未確定事項）は**実施していない**。利用者の判断による決定であり、観察の結果ではない。実運用で覆われる頻度が高いと分かった場合は、T045 の導線を手入力主体へ組み替える
 - [X] T002 Gradle Wrapper を生成し `gradlew` / `gradlew.bat` / `gradle/wrapper/gradle-wrapper.properties` を配置する
 - [X] T003 `settings.gradle.kts` に `:app` / `:data` / `:domain` を宣言し、ルート `build.gradle.kts` にプラグインの版を集約する
-- [X] T004 `gradle/libs.versions.toml` にバージョンカタログを定義する（AGP, Kotlin, KSP, Compose BOM, Room, Hilt, OkHttp, kotlinx.serialization, play-services-code-scanner, JUnit 5, **Robolectric, JUnit 4**）
+- [X] T004 `gradle/libs.versions.toml` にバージョンカタログを定義する（AGP, Kotlin, KSP, Compose BOM, Room, Hilt, OkHttp, kotlinx.serialization, play-services-code-scanner, JUnit 5, **Robolectric, JUnit 4**）。**（2026-09-01 追記）** `play-services-code-scanner` は Issue #1 対応（T077・T082、Phase 8）で削除され、CameraX とバンドル版 ML Kit（`com.google.mlkit:barcode-scanning`）に置き換わっている。もはや現在のカタログの内容ではない
 - [X] T005 [P] `domain/build.gradle.kts` を作成する（`kotlin("jvm")`、JVM 17、JUnit 5。**Android 依存を一切追加しないこと** — 憲法 原則III）
 - [X] T006 [P] `data/build.gradle.kts` を作成する（Android library、Room + KSP、Hilt、OkHttp、kotlinx.serialization、`:domain` に依存。**Robolectric と JUnit 4 を `testImplementation` に加え、`testOptions.unitTests.isIncludeAndroidResources = true` を設定する** — T028 の Room 制約テストを JVM 上で実行するため）
 - [X] T007 [P] `app/build.gradle.kts` と `app/src/main/AndroidManifest.xml` を作成する（applicationId `io.github.longbowxxx.readingtracker`、minSdk 26、compileSdk/targetSdk 36、Compose、Hilt、`:data` と `:domain` に依存）
@@ -98,7 +98,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 - [X] T037 [P] [US1] `data/src/main/kotlin/…/bibliography/NdlBibliographySource.kt` を実装する（`https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&query=isbn=`、`XmlPullParser`、3秒タイムアウト）
 - [X] T038 [US1] `data/src/main/kotlin/…/bibliography/ChainedBibliographySource.kt` を実装する（openBD → NDL の順、全体6秒の上限。**例外を投げず `Unavailable` を返すこと**）
 - [X] T039 [US1] `data/src/main/kotlin/…/di/BibliographyModule.kt` で `BibliographySource` を連鎖として提供する
-- [X] T040 [P] [US1] `app/src/main/kotlin/…/scanner/GoogleCodeScannerBarcodeScanner.kt` に `BarcodeScanner` を実装する（`play-services-code-scanner`。EAN-13 の上段のみを対象とし、`192` で始まる日本図書コードは読み捨てる）
+- [X] T040 [P] [US1] `app/src/main/kotlin/…/scanner/GoogleCodeScannerBarcodeScanner.kt` に `BarcodeScanner` を実装する（`play-services-code-scanner`。EAN-13 の上段のみを対象とし、`192` で始まる日本図書コードは読み捨てる）。**（2026-09-01 追記）** この実装は Google Code Scanner が1回の起動につき1件の結果を返して終了する方式であったため、下段を読むとその1件でスキャンが終了してしまい、上段を読み直せない不具合（[issue #1](https://github.com/LongbowXXX/reading-tracker/issues/1)）を引き起こした。T081・T082（Phase 8）で CameraX + バンドル版 ML Kit の実装に置き換えられ、このファイル自体は削除された
 - [X] T041 [US1] `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` を実装する（作品の自動照合 → 巻の作成/取得 → 読書記録の保存 → 配架レコードの保存。**棚番号が未入力でも配架レコードを作ること** — FR-017 と FR-024 の両立）
 - [X] T042 [US1] `domain/src/main/kotlin/…/usecase/UpdateRecordUseCase.kt` を実装する（既存記録の読書状態・棚番号・メモを更新する）
 - [X] T043 [US1] `RecordVolumeUseCase` から `UpdateRecordUseCase` への分岐を `domain/src/main/kotlin/…/usecase/RecordVolumeUseCase.kt` に組み込む（既存記録がある場合は編集へ — FR-029）
@@ -194,6 +194,25 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 
 ---
 
+## Phase 8: Issue #1 対応 — バーコード下段読み取りでのスキャン中断を修正
+
+**Purpose**: T050 で検出した [issue #1](https://github.com/LongbowXXX/reading-tracker/issues/1)（バーコード下段を読むとエラーで終了し上段を読み直せない）を修正する。**元のユーザーストーリーのスコープには含まれない、不具合修正として追加されたフェーズ**である
+
+**背景**: Google Code Scanner は1回の起動につき1件の結果を返して終了する方式のため、下段（読み捨てるべき値）を読んだ時点でスキャンそのものが終わってしまっていた。カメラプレビューを維持したままフレームを連続解析する方式（CameraX + ML Kit）へ差し替えることで解消する
+
+- [X] T077 [P] [US1] `gradle/libs.versions.toml` と `app/build.gradle.kts` に CameraX（1.6.2）とバンドル版 `com.google.mlkit:barcode-scanning`（17.3.0）の依存を追加する（**Issue #1 対応**。Google Play 配信版ではなくバンドル版を採用し、初回スキャンでのモデルダウンロードを不要にする）
+- [X] T078 [P] [US1] `app/src/main/kotlin/…/scanner/IsbnSelection.kt` に `selectIsbn()` を実装し、`app/src/test/kotlin/…/scanner/IsbnSelectionTest.kt` にテストを書く（**Issue #1 対応**。上段の ISBN（978/979）のみを採用し、下段の日本図書コード（192始まり）は `Isbn.parse` が拒否する値として黙って読み捨てることを固定する。contracts/barcode-scanner.md の受け入れ基準に対応）
+- [X] T079 [US1] `app/src/main/kotlin/…/scanner/IsbnBarcodeAnalyzer.kt` にフレームを連続解析するアナライザを実装する（**Issue #1 対応**。カメラプレビューを止めずに解析を継続し、`selectIsbn()` が採用した値のみを通知する）
+- [X] T080 [US1] `app/src/main/kotlin/…/scanner/ScanScreen.kt` にスキャン画面を実装する（**Issue #1 対応**。トーチ（ライト）の切り替えを追加する）
+- [X] T081 [US1] `app/src/main/kotlin/…/scanner/ScanActivity.kt` と `app/src/main/kotlin/…/scanner/BarcodeScannerFactory.kt` を実装する（**Issue #1 対応**。`:domain` の `BarcodeScanner` ポートは変更せず、`suspend fun scan()` の契約を保ったまま CameraX 実装を提供する）
+- [X] T082 [US1] `app/src/main/kotlin/…/ui/record/RecordScreen.kt` を `rememberBarcodeScanner()` の呼び出しへ1行だけ差し替え、`app/src/main/kotlin/…/scanner/GoogleCodeScannerBarcodeScanner.kt`（T040）を削除し、`play-services-code-scanner` を `gradle/libs.versions.toml`（T004）と `app/build.gradle.kts` から除去する（**Issue #1 対応**。旧実装からの入れ替え本体）
+- [X] T083 [US1] `./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest spotlessCheck assembleDebug` が全て通ることを確認した（**Issue #1 対応のビルドゲート**）
+- [X] T084 [P] [US1] `contracts/barcode-scanner.md`・`research.md`（R-003, R-005）・`plan.md` を CameraX + ML Kit 実装に合わせて更新する（**Issue #1 対応**。旧実装を現在時制で記述していた箇所を修正し、置き換えの経緯を記録として残す）
+
+**Checkpoint**: Issue #1 の修正はコードとユニットテスト・ビルドゲートの上では完了している。**ただし実機での確認はまだ行っていない**（憲法 原則IV）。確認すべき内容は「実機確認の記録（T075）」内の「未確認のまま残る項目」を参照
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -202,6 +221,7 @@ description: "Task list for 読書記録と棚番号の管理（中核）"
 - **Foundational (Phase 2)**: Phase 1 完了後。**全ユーザーストーリーをブロックする**
 - **User Stories (Phase 3〜6)**: Phase 2 完了後。優先度順に P1 → P2 → P3
 - **Polish (Phase 7)**: 対象とするストーリーが完了した後
+- **Issue #1 対応 (Phase 8)**: Phase 3（US1、T050 での不具合検出）の後。元のスコープには含まれない不具合修正であり、Phase 7 の完了を待つ必要はない
 
 ### User Story Dependencies
 
@@ -261,12 +281,12 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 ## Notes
 
 - `[P]` は別ファイルかつ依存なしを意味する
-- **各タスクの完了時に `./gradlew assembleDebug` が通ることを確認する**（憲法「開発ワークフローと品質ゲート」）。フェーズ末の確認タスク（T009, T050, T059, T066, T069, T076）は、その節目での明示的なゲート
+- **各タスクの完了時に `./gradlew assembleDebug` が通ることを確認する**（憲法「開発ワークフローと品質ゲート」）。フェーズ末の確認タスク（T009, T050, T059, T066, T069, T076, T083）は、その節目での明示的なゲート
 - タスクごと、または論理的なまとまりごとにコミットする。コミットメッセージは日本語（憲法 原則VII）
 - **`applyShelfNumberToWork()`（T020）を UI から呼ばないこと。** 憲法 原則III のテスト要件のためだけに存在し、A-9 は今回スコープ外（plan.md の Complexity Tracking）
 - **`ReadingStatus` に第3の値を追加しないこと。** 「離脱」は作品単位の状態であり今回は保持しない（憲法 原則II）
 - テストの実行基盤は `:domain` が JUnit 5、`:data` が JUnit 4 + Robolectric。`:domain` に Android 由来の依存を持ち込まないための使い分けであり、統一しないこと（憲法 原則III）
-- 実機でしか検証できない項目（T001, T050, T059, T073, T074）は、自動テストの成功をもって完了としない（憲法 原則IV）
+- 実機でしか検証できない項目（T001, T050, T059, T073, T074）は、自動テストの成功をもって完了としない（憲法 原則IV）。**Phase 8（Issue #1 対応、T077〜T084）も同様で、コード・テスト・ビルドゲートは完了しているが実機での確認はまだ行っていない**（「実機確認の記録（T075）」内の「未確認のまま残る項目」を参照）
 
 ---
 
@@ -286,12 +306,19 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 | quickstart 4.5 来店時の参照（US2） | 問題なし |
 | SC-001 / SC-002 / SC-003 | いずれも基準を満たした（具体的な計測値は未記録） |
 
-### 検出した不具合
+### 検出した不具合（修正済み・実機未確認）
 
 - [issue #1](https://github.com/LongbowXXX/reading-tracker/issues/1)
   バーコード読み取りで下段（日本図書コード）を読むとエラーで終了し、上段を読み直せない。
-  contracts/barcode-scanner.md が定める「下段は読み捨てる」を実装が満たしていない。
-  本スコープでは修正しない。
+  contracts/barcode-scanner.md が定める「下段は読み捨てる」を実装（`GoogleCodeScannerBarcodeScanner`、T040）が満たしていなかった。
+
+  **2026-09-01 修正済み**：Google Code Scanner は1回の起動につき1件の結果を返して終了する方式のため、
+  下段を読むとその1件（不採用の値）でスキャン自体が終わってしまい、上段の読み直しができなかった。
+  これを解消するため、CameraX + バンドル版 ML Kit によるカメラプレビュー常時表示・フレーム連続解析方式へ
+  実装を差し替えた（T077〜T082、Phase 8）。`selectIsbn()`（T078）が上段の ISBN（978/979）のみを採用し、
+  下段の値（192始まり）は `Isbn.parse` に拒否されて黙って読み捨てられ、スキャンはそのまま継続する。
+  ユニットテスト（`IsbnSelectionTest.kt`）で当該の受け入れ基準は固定したが、
+  **実機での確認はまだ行っていない**（憲法 原則IV）。確認すべき内容は下記「未確認のまま残る項目」に記載した。
 
 ### 未確認のまま残る項目
 
@@ -302,7 +329,12 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 | US3 の画面 | 暫定名での記録、および「暫定記録」タブからの正式な作品への紐づけ。特に紐づけ後に読書状態・棚番号・メモが引き継がれること |
 | US4 の画面 | 来店時の一覧から記録詳細を開き、中断→読了へ変更した後に、一覧の「次に読むべき巻」が繰り上がること |
 | 書誌取得の実応答 | openBD と国立国会図書館サーチの実際の応答スキーマ。パースはリソースに固定したサンプルでしか検証していない（research.md の未解決事項） |
-| Google Play 開発者サービスのモジュール初回配信 | 初回スキャン時のダウンロード挙動 |
+| Issue #1: 下段バーコードの読み取り | 下段（日本図書コード、192始まり）を読んでもカメラが閉じず、エラーが出ないこと（Issue #1 の受け入れ基準） |
+| Issue #1: 下段から上段への遷移 | 下段を読んだ状態からカメラを上段へ動かした場合に、スキャンが完了すること |
+| Issue #1: トーチと暗所での動作 | トーチ（ライト）の点灯・消灯が反映されること、および暗所での読み取りが問題なく行えること |
+| Issue #1: 片手操作での使用感 | 片手操作でのスキャン成功率、および旧 Google Code Scanner 実装との体感比較 |
+| Issue #1: 戻る操作での手入力への遷移 | スキャン画面で戻る操作をした際、エラーを出さずに ISBN 手入力へ落ちること |
+| Issue #1: バンドル版 ML Kit のオフライン動作 | 端末を機内モードにした状態でも初回スキャンが機能すること（バンドル版採用の確認） |
 
 これらはいずれも自動テストで代替できない。ドメイン層とデータ層の振る舞いは
 ユニットテストで固定済みだが、**画面の配線と実 API の疎通は未検証**である。
