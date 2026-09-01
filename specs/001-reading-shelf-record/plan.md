@@ -14,7 +14,7 @@
 
 **Language/Version**: Kotlin 2.x / JVM ターゲット 17
 
-**Primary Dependencies**: Jetpack Compose（BOM）、Room（KSP）、Kotlin Coroutines / Flow、Hilt、`play-services-code-scanner`、OkHttp、kotlinx.serialization。依存の版は Gradle バージョンカタログ（`gradle/libs.versions.toml`）で一元管理する
+**Primary Dependencies**: Jetpack Compose（BOM）、Room（KSP）、Kotlin Coroutines / Flow、Hilt、CameraX、`com.google.mlkit:barcode-scanning`（バンドル版）、OkHttp、kotlinx.serialization。依存の版は Gradle バージョンカタログ（`gradle/libs.versions.toml`）で一元管理する
 
 **Storage**: Room（端末内 SQLite）。外部サーバは持たない（憲法 原則V）
 
