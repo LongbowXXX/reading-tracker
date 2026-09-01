@@ -65,10 +65,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // バーコード読み取り（初期実装。差し替え可能なようにインターフェースで抽象化する — research.md R-003）
-    implementation(libs.play.services.code.scanner)
-
-    // バーコード読み取りの差し替え先。プレビューを維持したまま連続解析する（Issue #1）
+    // バーコード読み取り。プレビューを維持したまま連続解析する（Issue #1）
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
