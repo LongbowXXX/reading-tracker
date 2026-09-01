@@ -44,12 +44,37 @@ class ScanContract : ActivityResultContract<Unit, ScanResult>() {
  * スキャン画面は Activity として起動するため、実際の起動は [rememberBarcodeScanner] が
  * 用意した関数に委ねる。この分離により `suspend fun scan(): ScanResult` という
  * ポートの形を変えずに済み、UI 層とドメイン層へ差し替えが波及しない。
+ *
+ * [pending] は実行中のスキャンを1件だけ保持する。`scan()` はまず compare-and-set で
+ * この枠を獲得しようとし、獲得できた呼び出しだけが実際に Activity を起動する。
+ * 既に別の呼び出しが枠を占めている間に二重タップ等で `scan()` が再度呼ばれた場合、
+ * 新しい Activity は起動せず、既存の呼び出しの結果を横から待つ。こうしないと、
+ * 先に呼ばれた側の待ちが上書きされて永遠に完了しない（呼び出し元がハングする）。
  */
-class CameraXMlKitBarcodeScanner(private val launchScan: (CompletableDeferred<ScanResult>) -> Unit) : BarcodeScanner {
+class CameraXMlKitBarcodeScanner(
+    private val pending: AtomicReference<CompletableDeferred<ScanResult>?>,
+    private val launchScan: () -> Unit,
+) : BarcodeScanner {
     override suspend fun scan(): ScanResult {
         val result = CompletableDeferred<ScanResult>()
-        launchScan(result)
-        return result.await()
+        while (true) {
+            if (pending.compareAndSet(null, result)) {
+                // 枠を獲得できた。自分が Activity を起動し、その結果を待つ
+                launchScan()
+                return result.await()
+            }
+
+            // 枠は他の呼び出しが占めている。新たに Activity は起動せず、
+            // その呼び出しの結果を横から待つ（二重タップで呼び出し元を放置しないため）
+            val inFlight = pending.get()
+            if (inFlight != null) {
+                return inFlight.await()
+            }
+
+            // ここに来るのは、直前の compareAndSet 失敗と pending.get() の間に
+            // 実行中のスキャンが完了して枠が null に戻った場合のみ。
+            // 既に何も実行中ではないので、ループして自分がスキャンを開始する
+        }
     }
 }
 
@@ -71,8 +96,7 @@ fun rememberBarcodeScanner(): BarcodeScanner {
         }
 
     return remember(launcher) {
-        CameraXMlKitBarcodeScanner { deferred ->
-            pending.set(deferred)
+        CameraXMlKitBarcodeScanner(pending) {
             launcher.launch(Unit)
         }
     }
