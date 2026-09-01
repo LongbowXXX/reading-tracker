@@ -26,3 +26,8 @@ Thumbs.db
 
 # エディタ
 .vscode/
+
+# Claude Code
+# .claude/settings.json と .claude/skills/ は共有するためコミットする。
+# 都度承認で生成されるローカル専用の許可ルールだけを除外する。
+.claude/settings.local.json

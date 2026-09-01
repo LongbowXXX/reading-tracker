@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(.\\.specify\\scripts\\powershell\\check-prerequisites.ps1 *)",
+      "PowerShell(.\\gradlew.bat spotlessCheck)",
+      "PowerShell(.\\gradlew.bat spotlessCheck *)",
+      "PowerShell(.\\gradlew.bat spotlessApply)",
+      "PowerShell(.\\gradlew.bat spotlessApply *)",
+      "PowerShell(.\\gradlew.bat assembleDebug)",
+      "PowerShell(.\\gradlew.bat assembleDebug *)",
+      "PowerShell(.\\gradlew.bat :domain:test)",
+      "PowerShell(.\\gradlew.bat :domain:test *)",
+      "PowerShell(.\\gradlew.bat :data:testDebugUnitTest)",
+      "PowerShell(.\\gradlew.bat :data:testDebugUnitTest *)",
+      "PowerShell(git status)",
+      "PowerShell(git status *)",
+      "PowerShell(Get-ChildItem *)"
+    ]
+  }
+}
