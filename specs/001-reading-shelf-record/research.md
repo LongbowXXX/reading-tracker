@@ -72,7 +72,9 @@ Technical Context に残した未確定事項と、実装方針に影響する�
 
 ## R-003: バーコード読み取りの実装方式
 
-**Decision**: 初期実装は Google Code Scanner（`play-services-code-scanner`）を用いる。読み取り部分は `BarcodeScanner` インターフェースで抽象化し、CameraX + ML Kit の自前実装へ差し替えられる構造とする。
+**Decision**: CameraX + ML Kit（バンドル版 `com.google.mlkit:barcode-scanning`）の自前実装を用いる。読み取り部分は `BarcodeScanner` インターフェースで抽象化する。
+
+**更新（2026-09-01, Issue #1）**: 当初は Google Code Scanner（`play-services-code-scanner`）を初期実装として採用したが、`startScan()` 1回につき1件返して終了する仕様のため、書籍バーコード下段（`192` 始まりの日本図書コード）を読み捨てて読み取りを継続できなかった。契約が定めた対象シンボルの規定を満たせず、ここで想定していた差し替えを実施した。インターフェース境界を先に引いていたため、差し替えは `RecordScreen` のスキャナ生成1行に収まり、UI とドメインへ波及しなかった。
 
 **Rationale**:
 
@@ -122,7 +124,7 @@ Technical Context に残した未確定事項と、実装方針に影響する�
 | UI | Jetpack Compose（BOM で版を揃える） | 決定済み |
 | ローカル DB | Room | 決定済み。KSP でコード生成 |
 | 非同期 | Kotlin Coroutines / Flow | 決定済み |
-| バーコード | play-services-code-scanner（将来 CameraX + ML Kit） | R-003 |
+| バーコード | CameraX + ML Kit（バンドル版 `com.google.mlkit:barcode-scanning`） | R-003 |
 | HTTP | OkHttp | Retrofit を使わず、2経路の差異を `BibliographySource` 実装内に閉じる |
 | JSON | kotlinx.serialization | openBD 用 |
 | XML | Android 標準の `XmlPullParser` | NDL SRU 用。追加依存を増やさない |
@@ -177,4 +179,3 @@ Technical Context に残した未確定事項と、実装方針に影響する�
 
 - openBD / NDL サーチの応答スキーマの実際のフィールド名と、巻数に相当する項目の有無
 - NDL サーチ SRU の応答に含まれる巻次情報の粒度
-- `play-services-code-scanner` のモジュール配信に伴う初回利用時の挙動
