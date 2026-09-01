@@ -28,6 +28,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- バーコード読み取り（Issue #1）。アプリ内からのみ起動する -->
+        <activity
+            android:name=".scanner.ScanActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ReadingTracker" />
     </application>
 
 </manifest>
