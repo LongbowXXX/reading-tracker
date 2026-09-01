@@ -20,14 +20,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.longbowxxx.readingtracker.scanner.GoogleCodeScannerBarcodeScanner
+import io.github.longbowxxx.readingtracker.scanner.rememberBarcodeScanner
 
 /**
  * 記録の入口（User Story 1）。
@@ -39,11 +37,9 @@ import io.github.longbowxxx.readingtracker.scanner.GoogleCodeScannerBarcodeScann
 @Composable
 fun RecordScreen(modifier: Modifier = Modifier, viewModel: RecordViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
-    // スキャン UI は Activity を起動するため Activity のコンテキストを渡す。
-    // 差し替え（CameraX + ML Kit）はこの1行を変えるだけで済む（research.md R-003）
-    val scanner = remember(context) { GoogleCodeScannerBarcodeScanner(context) }
+    // CameraX + ML Kit の自前実装。下段（192 始まり）を読んでも読み取りを止めない（Issue #1）
+    val scanner = rememberBarcodeScanner()
 
     val requestScan =
         rememberCameraPermissionRequest(
