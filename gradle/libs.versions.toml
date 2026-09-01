@@ -22,8 +22,12 @@ room = "2.8.4"
 hilt = "2.57.2"
 hiltNavigationCompose = "1.3.0"
 
-# バーコード読み取り
+# バーコード読み取り（R-003 の差し替え先。CameraX のプレビューを維持したまま ML Kit で連続解析する）
 playServicesCodeScanner = "16.1.0"
+camerax = "1.6.2"
+# バンドル版を使う。Play 開発者サービス版はモデルの初回ダウンロードが要るため、
+# 圏外の個室で初回スキャンが失敗する（research.md R-003）
+mlkitBarcodeScanning = "17.3.0"
 
 # 非同期（kotlinx-coroutines-core は純 Kotlin であり Android 非依存。:domain でも使用可）
 kotlinxCoroutines = "1.10.2"
@@ -64,6 +68,11 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 
 # バーコード読み取り（初期実装。将来 CameraX + ML Kit へ差し替えうる — research.md R-003）
 play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcodeScanning" }
 
 # 非同期
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
