@@ -11,7 +11,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.longbowxxx.readingtracker.ui.ReadingTrackerNavGraph
 
 /**
- * 単一 Activity 構成。画面遷移は Compose Navigation で行う。
+ * アプリの各画面を受け持つ Activity。画面遷移は Compose Navigation で行う。
+ * 例外はバーコード読み取りで、カメラのライフサイクルを画面と一致させるため
+ * 専用の `ScanActivity` を起動し、結果を `ActivityResult` で受け取る。
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

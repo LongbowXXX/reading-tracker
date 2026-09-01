@@ -112,7 +112,9 @@ reading-tracker/
         ├── ui/record/               # 記録入力・確認・修正（User Story 1, 3, 4）
         ├── ui/visit/                # 店舗選択と来店時一覧（User Story 2）
         ├── ui/theme/
-        ├── scanner/                 # GoogleCodeScanner による BarcodeScanner 実装
+        ├── scanner/                 # CameraX + ML Kit による BarcodeScanner 実装
+        │                            #   BarcodeScannerFactory / ScanActivity / ScanScreen
+        │                            #   IsbnBarcodeAnalyzer / IsbnSelection
         └── di/                      # Hilt モジュール
 ```
 

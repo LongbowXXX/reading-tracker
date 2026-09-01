@@ -3,9 +3,12 @@ package io.github.longbowxxx.readingtracker.domain.port
 /**
  * バーコードの読み取り。
  *
- * 初期実装は Google Code Scanner を用いるが、暗所での読み取り精度に問題が出た場合に
- * CameraX + ML Kit の自前実装へ差し替える。差し替えが UI とドメインへ波及しないよう、
- * この契約を境界とする（research.md R-003）。
+ * 実装は CameraX + ML Kit の自前のもので、プレビューを維持したまま連続解析する
+ * （research.md R-003 / Issue #1）。当初は Google Code Scanner を用いていたが、
+ * 書籍バーコード下段を読み捨てて読み取りを続けられず、差し替えた。
+ *
+ * その差し替えが UI とドメインへ波及しなかったのは、この契約を境界に置いていたためである。
+ * カメラの都合は実装側に閉じ、呼び出し側は `suspend fun scan(): ScanResult` の形しか見ない。
  *
  * 実装は例外を投げてはならない。失敗は [ScanResult.Unavailable] として返す。
  */

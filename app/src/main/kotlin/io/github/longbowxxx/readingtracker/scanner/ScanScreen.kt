@@ -1,9 +1,11 @@
 package io.github.longbowxxx.readingtracker.scanner
 
+import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.TorchState
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
@@ -29,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -124,6 +127,8 @@ fun ScanScreen(onScanned: (Isbn) -> Unit, onCameraUnavailable: (Throwable) -> Un
                 // カメラを開けない理由は端末とタイミングに依る。契約どおり例外は投げず、
                 // 呼び出し側が手入力へ落とせるように通知する。ただし画面を離脱済みなら
                 // 呼び出し先は既にないので通知しない
+                // 実機でカメラが開けないときに追える手掛かりを残す。読み取り値は書かない
+                Log.e(SCANNER_LOG_TAG, "カメラを起動できませんでした", e)
                 if (!disposed) {
                     onCameraUnavailable(e)
                 }
@@ -143,6 +148,17 @@ fun ScanScreen(onScanned: (Isbn) -> Unit, onCameraUnavailable: (Throwable) -> Un
         camera?.cameraControl?.enableTorch(torchOn)
     }
 
+    // ボタンの表示は「点けたつもり」ではなく実際のトーチ状態に従わせる。
+    // ホームへ抜けて戻ると、CameraX が使用ケースの束縛を解いた時点でライトは消えるが、
+    // camera も torchOn も変化しないため、観測しないとボタンだけ「ライトを消す」のまま残り、
+    // 点け直すのに2度押しが要る。点灯要求が端末側で通らなかった場合もここで実態へ戻る
+    DisposableEffect(camera, lifecycleOwner) {
+        val torchState = camera?.cameraInfo?.torchState
+        val observer = Observer<Int> { state -> torchOn = state == TorchState.ON }
+        torchState?.observe(lifecycleOwner, observer)
+        onDispose { torchState?.removeObserver(observer) }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
 
@@ -158,7 +174,7 @@ fun ScanScreen(onScanned: (Isbn) -> Unit, onCameraUnavailable: (Throwable) -> Un
         ) {
             // 下段を読んでも無反応になるため、なぜ確定しないのかを伝える（憲法 原則VI）
             Text(
-                text = "上段のバーコード（978 で始まる ISBN）に向けてください。下段の価格コードは読み取りません。",
+                text = "上段のバーコード（978/979 で始まる ISBN）に向けてください。下段の価格コードは読み取りません。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White,
             )
