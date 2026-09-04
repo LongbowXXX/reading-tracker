@@ -10,6 +10,8 @@
 
 技術的な要点は3つ。第一に、棚番号の継承・次巻判定・ISBN 検証・作品照合を **`:domain` という Android 非依存の Gradle モジュール**へ隔離し、JUnit で仕様を固定する（憲法 原則III）。第二に、**棚番号を「店舗 × 巻」の UNIQUE 制約**で表現し、店舗独立性をスキーマで担保する。第三に、差し替えが予想される3箇所（書誌情報の取得元、バーコード読み取り方式、タイトル解析方式）をインターフェースで抽象化し、実機検証の結果による方針転換が UI とドメインへ波及しないようにする。**タイトル解析の抽象化は Issue #4 でオンデバイス AI を導入した際に加えたもので、この境界により ML Kit（Android 依存）を `:domain` へ持ち込まずに済んでいる**（research.md R-002）。
 
+本アプリは**オンデバイス AI の活用を前提に機能を拡張していく方針**であり、AI が動作しない端末はサポート対象外とする（[issue #9](https://github.com/LongbowXXX/reading-tracker/issues/9)、FR-032〜FR-035）。そのため起動時に AI の利用可否を判定する**起動ゲート**をアプリ全体に掛け、利用可能になるまで記録・参照の画面へ到達させない。判定は `:domain` のポート `AiAvailability` として抽象化し、モデル未取得（準備待ち・取得中）と非対応を画面で区別する。モデルの取得は従量課金回線での大容量通信を避けるため、利用者の明示操作で開始する（research.md R-008、[contracts/ai-availability.md](./contracts/ai-availability.md)）。
+
 ## Technical Context
 
 **Language/Version**: Kotlin 2.x / JVM ターゲット 17
@@ -26,7 +28,7 @@
 
 **Performance Goals**: 記録の保存完了まで 30 秒以内・棚番号継承時は 5 タップ以内（SC-001）／店舗選択から一覧表示まで 3 操作以内・5 秒以内（SC-003）／書誌取得は 1 経路 3 秒・全体 6 秒でタイムアウトし、手入力へ落とす
 
-**Constraints**: 電波が届かない個室でも記録の作成・保存・参照が行えること（SC-006）。片手操作。書誌取得以外の全機能がオフラインで完結すること
+**Constraints**: 店舗の Wi-Fi が利用できることを前提とし、オフラインでの動作は要件としない（旧 SC-006 は 2026-09-05 に削除）。書誌情報の取得に失敗した場合は手入力へ落として記録を完了できること（FR-007）。片手操作。オンデバイス AI が動作しない端末はサポート対象外とする（FR-032〜FR-035）
 
 **Scale/Scope**: 利用者1名。想定データ量は店舗 10 件程度、作品数百件、巻数千件。画面数は5前後（記録入力／確認・修正／店舗選択／来店時一覧／巻の詳細）
 
@@ -36,7 +38,9 @@
 
 *GATE: Phase 0 の前に通過必須。Phase 1 の設計後に再評価する。*
 
-憲法 v1.0.0（[.specify/memory/constitution.md](../../.specify/memory/constitution.md)）の各原則から導出したゲート。
+憲法 v1.1.0（[.specify/memory/constitution.md](../../.specify/memory/constitution.md)）の各原則から導出したゲート。
+
+v1.1.0（2026-09-04 改訂）が「開発ワークフローと品質ゲート」へ追加した**図の作成・図の成果物**（Archify を用い、JSON IR と HTML の双方を `docs/diagrams/` へ置く）は、本フィーチャーでは図を作成していないため**非該当**である。
 
 | # | ゲート | 判定基準 | Phase 0 前 | Phase 1 後 |
 | --- | --- | --- | --- | --- |
@@ -61,8 +65,11 @@
 - **G3**: `resolveInheritedShelfNumber()` は店舗 ID を引数に取らず、呼び出し側が単一店舗・単一作品に絞ったレコードのみを渡す契約とした。**ドメイン関数が他店舗のレコードへ到達する手段を持たない**構造とすることで、店舗独立性をスキーマ（UNIQUE 制約）と関数シグネチャの二重で担保する。
 - **G4**: [contracts/barcode-scanner.md](./contracts/barcode-scanner.md) と [quickstart.md](./quickstart.md) 4章に、実機でしか確認できない項目を列挙した。棚番号シールがバーコードを覆う頻度（要求定義書 9.）の確認も含む。
 - **G6**: 書誌取得の失敗を例外扱いせず、`NotFound` / `Unavailable` の双方から手入力へ直行する契約とした（[contracts/bibliography-source.md](./contracts/bibliography-source.md)）。読み取り画面からの手入力切り替えも `Cancelled` として通常経路に含めた。
+- **G1 の更新（2026-09-05, Issue #9）**: FR-032〜FR-035 は当初、要求定義書に根拠を持たなかった（`/speckit-analyze` の指摘 D1）。憲法 原則I が「文書に記載のない機能を推測で追加してはならない」「追加が必要なら承認を得てから改訂する」と定めるため、[docs/requirements.md](../../docs/requirements.md) の 3.2 前提条件（AI が動作する端末に限る／店舗の Wi-Fi を利用できる）、3.3 制約（オフライン前提の削除）、および **G 群（G-1, G-2）** を承認のうえ改訂し（2026-09-05）、FR-032〜FR-035 を G-1 / G-2 へ紐づけた。**改訂前に実装へ着手していない。**
+- **G4 の更新（2026-09-05, Issue #9）**: オンデバイス AI の可用性判定と、非対応・準備待ちの表示は**実機でしか確認できない**。JVM のユニットテストからは端末の AI 基盤（AICore）へ接続できないため、取得開始の操作から本体への自動遷移、非対応端末での警告表示と記録・参照画面への到達不能、開発ビルドでの続行導線を [quickstart.md](./quickstart.md) 4.6 の実機確認項目として列挙した。**自動テストの対象は `:domain` に置く写像と状態遷移（`AiAvailabilityStatus` への写像、`AiGateState` の遷移）のみ**であり、判定そのものは対象外である（[contracts/ai-availability.md](./contracts/ai-availability.md)）。
+- **G6 との関係（2026-09-05, Issue #9）**: 起動ゲートは**記録の主導線のタップ数を増やさない**。`AVAILABLE` の端末では確認中の表示を素通りして本体へ入る。モデル未取得の場合は取得を開始する操作を初回に1度だけ求めるが（FR-034。従量課金回線での自動取得を避けるための意図的な1タップ）、取得の完了後は追加の操作を求めない（SC-009）。そのほかにゲートが操作を求めるのは、非対応・判定不能・取得失敗という**本来先へ進めない状況での再試行だけ**である。
 
-**結論: 全ゲート PASS。** 正当化を要する逸脱は Complexity Tracking の1件のみ。
+**結論: 全ゲート PASS。** 正当化を要する逸脱は Complexity Tracking の2件のみ。
 
 ## Project Structure
 
@@ -79,7 +86,8 @@ specs/001-reading-shelf-record/
 │   ├── domain-api.md
 │   ├── bibliography-source.md
 │   ├── barcode-scanner.md
-│   └── title-analyzer.md   # Issue #4 で追加
+│   ├── title-analyzer.md   # Issue #4 で追加
+│   └── ai-availability.md   # Issue #9 で追加
 ├── checklists/
 │   └── requirements.md
 └── tasks.md             # Phase 2 出力（/speckit-tasks が作成。本コマンドでは作らない）
@@ -99,21 +107,33 @@ reading-tracker/
 │       │   ├── model/               # Isbn, ReadingStatus, ShelfNumber, Work, Volume ほか
 │       │   ├── shelf/               # resolveInheritedShelfNumber, applyShelfNumberToWork
 │       │   ├── reading/             # resolveNextVolume
-│       │   ├── title/               # parseVolumeTitle（照合キーと巻数抽出）
-│       │   └── port/                # BibliographySource, BarcodeScanner のインターフェース
+│       │   ├── title/               # parseVolumeTitle（照合キーと巻数抽出）、TitleAnalyzer の
+│       │   │                        #   規則ベース・連鎖・キャッシュ実装（Issue #4）
+│       │   ├── usecase/             # RecordVolume, UpdateRecord, VisitList,
+│       │   │                        #   LinkProvisionalWork の各ユースケース
+│       │   ├── ai/                  # AiGateState（判定結果 → 起動ゲートの画面状態。Issue #9）
+│       │   └── port/                # BibliographySource, BarcodeScanner, ReadingRepository,
+│       │                            #   TitleAnalyzer（Issue #4）, AiAvailability（Issue #9）
 │       └── test/kotlin/…            # JUnit 5。仕様書として機能させる
 ├── data/                            # Android ライブラリ
 │   └── src/
 │       ├── main/kotlin/…/data/
 │       │   ├── db/                  # Room: Entity, DAO, Database, 型コンバータ
 │       │   ├── bibliography/        # OpenBd / Ndl / Chained の各 BibliographySource 実装
-│       │   └── repository/          # ドメインとの境界。DB と書誌取得を束ねる
+│       │   ├── title/               # GenAiTitleAnalyzer（Issue #4）
+│       │   ├── ai/                  # GenAiAvailability（ML Kit GenAI での可否判定。Issue #9）
+│       │   ├── repository/          # ドメインとの境界。DB と書誌取得を束ねる
+│       │   └── di/                  # Hilt モジュール（DB・書誌取得・タイトル解析・AI 可用性）
 │       └── test/kotlin/…            # Room の制約検証、連鎖規則の検証
 └── app/                             # Android アプリ
-    └── src/main/kotlin/…/app/
+    └── src/main/kotlin/io/github/longbowxxx/readingtracker/
+        ├── MainActivity.kt          # 起動点。NavGraph を AiGateScreen で包む（Issue #9）
+        ├── ui/                      # NavGraph（画面遷移の定義）
         ├── ui/record/               # 記録入力・確認・修正（User Story 1, 3, 4）
         ├── ui/visit/                # 店舗選択と来店時一覧（User Story 2）
-        ├── ui/theme/
+        ├── ui/link/                 # 暫定記録を正式な作品へ紐づける画面（User Story 3、FR-008）
+        ├── ui/ai/                   # 起動ゲートの画面と ViewModel（Issue #9）
+        │                            #   AiGateScreen / AiGateViewModel
         ├── scanner/                 # CameraX + ML Kit による BarcodeScanner 実装
         │                            #   BarcodeScannerFactory / ScanActivity / ScanScreen
         │                            #   IsbnBarcodeAnalyzer / IsbnSelection
@@ -127,6 +147,7 @@ reading-tracker/
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | スコープ外の A-9（作品単位の棚番号一括更新）に相当する純粋関数 `applyShelfNumberToWork()` を `:domain` に置く | 憲法 原則III が「作品単位の一括更新が、他店舗の記録に影響しないこと」のテストを明示的に必須としている。対象の関数が存在しなければこのテストを書けない | 一括更新を丸ごと省くと原則III のテスト要件を満たせない。逆に UI 導線まで作ると A-9 をスコープへ引き込み原則I に反する。**関数とテストのみを置き、UI からは呼ばない**ことで双方を満たす |
+| 配布ビルドと開発ビルドで起動時の振る舞いが変わる（FR-035） | AICore を持たないエミュレータで UI の確認を継続する必要がある | 回避手段が無いと非対応環境で UI 実装を検証できない。逆に配布ビルドへ残すと、非対応端末で機能を利用させないという FR-033 が骨抜きになる。**開発ビルドに限って続行の導線を出す**ことで双方を満たす |
 
 ## 次のフェーズ
 
