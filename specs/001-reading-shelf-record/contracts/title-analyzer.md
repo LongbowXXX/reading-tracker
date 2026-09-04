@@ -97,8 +97,8 @@ research.md R-002 に記載。
 | A-5 | すべての経路が `null` | `analyzeOrFallback()` が規則ベースの結果を返す |
 | A-6 | 同じ `rawTitle` を2回解析する | 経路は1度しか呼ばれない（`CachingTitleAnalyzer`） |
 | A-7 | AI が翻訳した作品名を返す | 妥当性検証で捨て、規則ベースへ落ちる |
-| A-8 | `拳児2` を AI 経路が解析する | `workTitle = 拳児` / `volumeNumber = 2`（**実機確認が必要**） |
-| A-9 | `ゴルゴ13` を AI 経路が解析する | `workTitle = ゴルゴ13` / `volumeNumber = null`（**実機確認が必要**） |
+| A-8 | `拳児2` を AI 経路が解析する | `workTitle = 拳児` / `volumeNumber = 2`（**2026-09-04 に Pixel 9 系で確認済み**） |
+| A-9 | `ゴルゴ13` を AI 経路が解析する | `workTitle = ゴルゴ13` / `volumeNumber = null`（**2026-09-04 に Pixel 9 系で確認済み**） |
 
 ---
 
@@ -111,4 +111,4 @@ research.md R-002 に記載。
 - 巻数表記の語彙と照合キーの正規化は `VolumeTitleParserTest.kt` で固定する。表記の例は
   openBD 1,535 件・NDL 230 件の実データから採る。
 - **推論そのものは JVM のユニットテストで検証できない。** AICore への接続が要るため、
-  A-8 / A-9 は実機での確認項目とする（憲法 原則IV、[quickstart.md](../quickstart.md)）。
+  A-8 / A-9 は実機での確認項目とする（憲法 原則IV、[quickstart.md](../quickstart.md)）。**2026-09-04 に Pixel 9 系で確認済み**。
