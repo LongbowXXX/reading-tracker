@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
+import io.github.longbowxxx.readingtracker.domain.port.TitleAnalyzer
 import io.github.longbowxxx.readingtracker.domain.usecase.LinkProvisionalWorkUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.RecordVolumeUseCase
 import io.github.longbowxxx.readingtracker.domain.usecase.UpdateRecordUseCase
@@ -30,8 +31,11 @@ object DomainModule {
 
     @Provides
     @Singleton
-    fun provideRecordVolumeUseCase(repository: ReadingRepository, updateRecordUseCase: UpdateRecordUseCase): RecordVolumeUseCase =
-        RecordVolumeUseCase(repository, updateRecordUseCase)
+    fun provideRecordVolumeUseCase(
+        repository: ReadingRepository,
+        updateRecordUseCase: UpdateRecordUseCase,
+        titleAnalyzer: TitleAnalyzer,
+    ): RecordVolumeUseCase = RecordVolumeUseCase(repository, updateRecordUseCase, titleAnalyzer)
 
     @Provides
     @Singleton
@@ -39,6 +43,6 @@ object DomainModule {
 
     @Provides
     @Singleton
-    fun provideLinkProvisionalWorkUseCase(repository: ReadingRepository): LinkProvisionalWorkUseCase =
-        LinkProvisionalWorkUseCase(repository)
+    fun provideLinkProvisionalWorkUseCase(repository: ReadingRepository, titleAnalyzer: TitleAnalyzer): LinkProvisionalWorkUseCase =
+        LinkProvisionalWorkUseCase(repository, titleAnalyzer)
 }

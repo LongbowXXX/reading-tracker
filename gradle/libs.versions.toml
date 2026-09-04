@@ -27,6 +27,9 @@ camerax = "1.6.2"
 # バンドル版を使う。Play 開発者サービス版はモデルの初回ダウンロードが要るため、
 # 圏外の個室で初回スキャンが失敗する（research.md R-003）
 mlkitBarcodeScanning = "17.3.0"
+# オンデバイス AI（Gemini Nano）でのタイトル解析（Issue #4）。beta であり後方非互換な変更がありうる。
+# 対応端末は限られるため、規則ベースの経路を必ず残すこと
+mlkitGenaiPrompt = "1.0.0-beta4"
 
 # 非同期（kotlinx-coroutines-core は純 Kotlin であり Android 非依存。:domain でも使用可）
 kotlinxCoroutines = "1.10.2"
@@ -70,6 +73,7 @@ androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", 
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcodeScanning" }
+mlkit-genai-prompt = { group = "com.google.mlkit", name = "genai-prompt", version.ref = "mlkitGenaiPrompt" }
 
 # 非同期
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
