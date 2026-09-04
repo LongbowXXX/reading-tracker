@@ -1,34 +1,31 @@
 <!--
 Sync Impact Report
-- Version change: (未設定テンプレート) → 1.0.0
-- Bump rationale: 初回批准（MAJOR確定）。テンプレートのプレースホルダを全て具体値へ置換し、
-  7原則および追加制約・開発ワークフロー・ガバナンスを新規に定義した。
-- Modified principles:
-  - [PRINCIPLE_1_NAME] → I. 要求定義書を唯一の正とする
-  - [PRINCIPLE_2_NAME] → II. 既存アプリのデータモデルを持ち込まない
-  - [PRINCIPLE_3_NAME] → III. ドメインロジックを Android 非依存に分離する（NON-NEGOTIABLE）
-  - [PRINCIPLE_4_NAME] → IV. 実機検証が必要な領域を明示する
-  - [PRINCIPLE_5_NAME] → V. サーバを持たない
-  - (新規追加) → VI. 入力操作を最小手数に保つ
-  - (新規追加) → VII. やりとりは日本語で行う
+- Version change: 1.0.0 → 1.1.0
+- Bump rationale: 「開発ワークフローと品質ゲート」に図の作成に関する2項目を追加した。
+  ガバナンスの定義する MINOR（セクションの追加、指針の実質的拡張）に該当し、既存原則の
+  削除・再定義はないため MAJOR ではない。
+- Modified principles: なし（原則 I〜VII に変更なし）
 - Added sections:
-  - 追加制約（プロダクト・データ）
-  - 開発ワークフローと品質ゲート
+  - 「開発ワークフローと品質ゲート」内: **図の作成** / **図の成果物**
 - Removed sections: なし
 - Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md — "Constitution Check" は汎用プレースホルダ
-    （"[Gates determined based on constitution file]"）であり、/speckit-plan 実行時に
-    本憲法の原則からゲートを導出する。テンプレート自体の変更は不要。
-  - ✅ .specify/templates/spec-template.md — 憲法参照なし。スコープ／要求記述の構造は
-    原則I・IIと矛盾しないため変更不要。
-  - ✅ .specify/templates/tasks-template.md — 憲法参照なし。原則IIIが求める
-    「ドメインロジックとユニットテストを先行配置」は /speckit-tasks 実行時に
-    タスク順序として担保する。
-  - ✅ .specify/templates/checklist-template.md — 憲法参照なし。変更不要。
-  - ✅ README.md — 記載内容（目的・開発方針）は本憲法と矛盾しない。変更不要。
-  - ✅ .claude/skills/speckit-*/SKILL.md — spec-kit 配布物。特定エージェント名への
-    不適切な依存は見当たらず変更不要。
+  - ✅ .specify/templates/plan-template.md — "Constitution Check" は汎用プレースホルダであり、
+    /speckit-plan 実行時に本憲法からゲートを導出する。テンプレート自体の変更は不要。
+  - ✅ .specify/templates/spec-template.md — 図への言及なし。変更不要。
+  - ✅ .specify/templates/tasks-template.md — 図への言及なし。変更不要。
+  - ✅ .specify/templates/checklist-template.md — 図への言及なし。変更不要。
+  - ✅ README.md — 図への言及なし。変更不要。
+  - ⚠ CLAUDE.md — 図の作成手順（Archify の実行コマンドと配置規約）を「## 図の作成」節として
+    追記済み。
 - Deferred TODOs: なし
+
+過去の改訂:
+- 1.0.0 (2026-08-30) 初回批准。テンプレートのプレースホルダを全て具体値へ置換し、7原則および
+  追加制約・開発ワークフロー・ガバナンスを新規に定義した。原則名は
+  I. 要求定義書を唯一の正とする / II. 既存アプリのデータモデルを持ち込まない /
+  III. ドメインロジックを Android 非依存に分離する（NON-NEGOTIABLE） /
+  IV. 実機検証が必要な領域を明示する / V. サーバを持たない /
+  VI. 入力操作を最小手数に保つ / VII. やりとりは日本語で行う。
 -->
 
 # 漫画喫茶 読書記録アプリ Constitution
@@ -159,6 +156,14 @@ Sync Impact Report
 - **完了報告**: 実機でしか検証できない項目は「実機確認が必要」と明示する（MUST / 原則IV）。
 - **判断の帰属**: 人間が判断すべき事項をエージェントが推測で決めてはならない（MUST NOT）。
   迷う点は `[NEEDS CLARIFICATION]` として残し、`/speckit-clarify` で解消する。
+- **図の作成**: 図（アーキテクチャ・ワークフロー・シーケンス・データフロー・状態遷移）を作成する
+  場合は Archify スキルを用いる（MUST）。Mermaid その他の形式で新規に図を作成してはならない
+  （MUST NOT）。図を作成するか否かの判断は各フェーズの必要に応じて行い、図の作成自体は義務と
+  しない。図中のラベル・注釈は日本語とする（MUST / 原則VII）。
+- **図の成果物**: 図のソースである Archify の JSON IR と、生成した HTML の両方を
+  `docs/diagrams/` に配置してコミットする（MUST）。HTML のみをコミットしてはならない
+  （MUST NOT）。コミット前に `archify deliver --quality showcase` の成功を確認する（MUST）。
+  検証に失敗した図をコミットしてはならない（MUST NOT）。
 
 ## Governance
 
@@ -177,4 +182,4 @@ Sync Impact Report
 - **逸脱の扱い**: 原則に反する実装が必要と判断した場合は、実装前に理由と代替案を提示し、
   承認を得る。承認された逸脱は plan の Complexity Tracking に記録する。
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-30 | **Last Amended**: 2026-08-30
+**Version**: 1.1.0 | **Ratified**: 2026-08-30 | **Last Amended**: 2026-09-04

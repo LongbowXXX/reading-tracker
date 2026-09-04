@@ -8,6 +8,8 @@ out/
 build/
 **/build/
 local.properties
+# Eclipse / JDT がモジュール直下に出力する成果物（domain/bin など）
+bin/
 
 # OS files
 .DS_Store

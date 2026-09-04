@@ -3,7 +3,9 @@ package io.github.longbowxxx.readingtracker.domain.usecase
 import io.github.longbowxxx.readingtracker.domain.model.Isbn
 import io.github.longbowxxx.readingtracker.domain.model.NewWork
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
-import io.github.longbowxxx.readingtracker.domain.title.parseVolumeTitle
+import io.github.longbowxxx.readingtracker.domain.port.TitleAnalyzer
+import io.github.longbowxxx.readingtracker.domain.title.RuleBasedTitleAnalyzer
+import io.github.longbowxxx.readingtracker.domain.title.analyzeOrFallback
 
 /**
  * 暫定記録を正式な作品へ紐づける指示（FR-008）。
@@ -33,12 +35,15 @@ data class LinkProvisionalWorkResult(val workId: Long, val volumeId: Long)
  * 記録の削除（F-3）は本スコープ外であり、配架レコードも一緒に付け替わるため
  * 来店時の一覧には現れない。
  */
-class LinkProvisionalWorkUseCase(private val repository: ReadingRepository) {
+class LinkProvisionalWorkUseCase(
+    private val repository: ReadingRepository,
+    private val titleAnalyzer: TitleAnalyzer = RuleBasedTitleAnalyzer(),
+) {
     /** @return 紐づけ結果。指定の巻が存在しなければ null */
     suspend fun execute(command: LinkProvisionalWorkCommand): LinkProvisionalWorkResult? {
         val volume = repository.findVolume(command.volumeId) ?: return null
 
-        val parsed = parseVolumeTitle(command.rawTitle)
+        val parsed = titleAnalyzer.analyzeOrFallback(command.rawTitle)
         val volumeNumber = command.volumeNumberOverride ?: parsed.volumeNumber
 
         val targetWork =

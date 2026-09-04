@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test
  * 誤照合の完全な排除は目標としない。確認画面で利用者が修正・分離できることを前提とする
  * （spec.md の Assumptions）。ここで固定するのは「同一シリーズの異なる巻から同一の
  * 照合キーが得られること」である。
+ *
+ * 表記の例は openBD 1,535 件・NDL 230 件の実データから採った（Issue #4）。
  */
 class VolumeTitleParserTest {
     @Test
@@ -96,5 +98,78 @@ class VolumeTitleParserTest {
         val parsed = parseVolumeTitle("")
         assertNull(parsed.volumeNumber)
         assertEquals("", parsed.matchKey)
+    }
+
+    // --- 以下 Issue #4 で実データから追加した表記 ---
+
+    @Test
+    @DisplayName("末尾のピリオドの有無で照合キーが割れない")
+    fun `末尾の区切り記号を照合キーから落とす`() {
+        // openBD は「チェンソーマン 5」、NDL は「チェンソーマン. 5」を返す。同じ本である
+        assertEquals(
+            parseVolumeTitle("チェンソーマン 5").matchKey,
+            parseVolumeTitle("チェンソーマン. 6").matchKey,
+        )
+    }
+
+    @Test
+    fun `巻Nの表記から巻数を抽出する`() {
+        val parsed = parseVolumeTitle("ONE PIECE. 巻94")
+        assertEquals(94, parsed.volumeNumber)
+        assertEquals("onepiece", parsed.matchKey)
+    }
+
+    @Test
+    fun `巻ノNと巻之Nの表記から巻数を抽出する`() {
+        assertEquals(9, parseVolumeTitle("BORUTO : NARUTO NEXT GENERATIONS 巻ノ9").volumeNumber)
+        assertEquals(3, parseVolumeTitle("るろうに剣心-明治剣客浪漫譚・北海道編- 巻之3").volumeNumber)
+    }
+
+    @Test
+    fun `volN表記から巻数を抽出する`() {
+        assertEquals(8, parseVolumeTitle("アクタージュ = act-age vol.8").volumeNumber)
+        assertEquals(25, parseVolumeTitle("僕のヒーローアカデミア = MY HERO ACADEMIA. Vol.25").volumeNumber)
+        assertEquals(1, parseVolumeTitle("激辛課長 : New Edition VOLUME.1").volumeNumber)
+    }
+
+    @Test
+    fun `そのN表記から巻数を抽出する`() {
+        assertEquals(1, parseVolumeTitle("月曜日のたわわ. その1").volumeNumber)
+    }
+
+    @Test
+    fun `シャープN表記から巻数を抽出する`() {
+        assertEquals(2, parseVolumeTitle("ブーツレグ = BooTsLeG. #2").volumeNumber)
+    }
+
+    @Test
+    @DisplayName("並列書名の有無で照合キーが割れない")
+    fun `照合キーは並列書名を落とす`() {
+        // AI 経路は「バイオメガ」を返し、規則ベースは「バイオメガ = BIOMEGA」を返す。
+        // 照合キー側で吸収しないと、経路の違いだけで別作品になる
+        assertEquals(
+            buildMatchKey("バイオメガ"),
+            parseVolumeTitle("バイオメガ = BIOMEGA. 1").matchKey,
+        )
+    }
+
+    @Test
+    fun `照合キーは大文字小文字を揃える`() {
+        assertEquals(
+            parseVolumeTitle("act-age 1").matchKey,
+            parseVolumeTitle("Act-Age 2").matchKey,
+        )
+    }
+
+    @Test
+    @DisplayName("先頭の等号は並列書名の区切りとみなさない")
+    fun `先頭の等号は落とさない`() {
+        assertEquals("=love", buildMatchKey("=LOVE"))
+    }
+
+    @Test
+    fun `感嘆符と括弧は作品名の一部として残す`() {
+        assertEquals("よつばと!", buildMatchKey("よつばと！"))
+        assertEquals("怪物(けもの)事変", buildMatchKey("怪物(けもの)事変"))
     }
 }

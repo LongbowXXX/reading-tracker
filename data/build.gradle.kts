@@ -48,6 +48,9 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
+    // オンデバイス AI によるタイトル解析（Issue #4）。ML Kit は Android 依存のため :domain には置けない
+    implementation(libs.mlkit.genai.prompt)
+
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

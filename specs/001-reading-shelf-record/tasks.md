@@ -320,6 +320,23 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
   ユニットテスト（`IsbnSelectionTest.kt`）で当該の受け入れ基準は固定したが、
   **実機での確認はまだ行っていない**（憲法 原則IV）。確認すべき内容は下記「未確認のまま残る項目」に記載した。
 
+### 確認済み（2026-09-04, Issue #4）
+
+端末: **Pixel 9 系**（Prompt API 対応、Gemini Nano v3）
+
+| 項目 | 結果 |
+| --- | --- |
+| 続巻が同一作品にまとまること（Issue #4 の受け入れ基準） | 問題なし |
+| オンデバイス AI 経路が実際に働くこと | **働いた**。`checkStatus()` が `AVAILABLE` を返し、推論結果が採用された |
+| 日本語のタイトルに対して機能すること | 問題なし。プロンプトの指示文は英語、入出力は日本語という構成のまま動作した |
+| 区切りの無い数字の判別（A-8 / A-9） | **問題なし**。`拳児2`（2巻）と `ゴルゴ13` 系（作品名の一部）を区別できた。**AI を導入した理由そのものであり、正規表現では原理的に解けない箇所** |
+
+**未計測**: 推論のレイテンシ（2,500 ms の打ち切りに収まっているかの実測値）、および SC-001（30秒以内）への影響。
+体感では問題が出ていないが、具体的な計測値は記録していない（2026-08-31 の SC-001〜003 と同じ扱い）。
+
+**AI 非対応端末での動作は未確認**。Pixel 9 系でしか試しておらず、`FeatureStatus.UNAVAILABLE` から
+規則ベースへ落ちる経路は実機で通っていない。ユニットテスト（`TitleAnalyzerChainTest.kt`）では固定済み。
+
 ### 未確認のまま残る項目
 
 以下は実機で一度も動作させていない。**次に実機へ導入する際の確認対象**とする。
@@ -335,6 +352,52 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 | Issue #1: 片手操作での使用感 | 片手操作でのスキャン成功率、および旧 Google Code Scanner 実装との体感比較 |
 | Issue #1: 戻る操作での手入力への遷移 | スキャン画面で戻る操作をした際、エラーを出さずに ISBN 手入力へ落ちること |
 | Issue #1: バンドル版 ML Kit のオフライン動作 | 端末を機内モードにした状態でも初回スキャンが機能すること（バンドル版採用の確認） |
+| Issue #4: AI 非対応端末でのフォールバック | Prompt API 非対応の端末で `FeatureStatus.UNAVAILABLE` から規則ベースへ落ち、記録が完了すること |
+| Issue #4: モデル未ダウンロード時の初回動作 | `DOWNLOADABLE` の状態で記録を行った場合に、待たされずに規則ベースで完了し、ダウンロードが裏で進むこと |
+| Issue #4: 推論のレイテンシ | 2,500 ms の打ち切りに収まること、および SC-001（30秒以内）を損なわないこと |
 
 これらはいずれも自動テストで代替できない。ドメイン層とデータ層の振る舞いは
 ユニットテストで固定済みだが、**画面の配線と実 API の疎通は未検証**である。
+
+---
+
+## Phase 9: Convergence — Issue #4 対応（作品同定へのオンデバイス AI 導入）
+
+**Purpose**: [issue #4](https://github.com/LongbowXXX/reading-tracker/issues/4)（巻数抽出が外れ、続巻が別作品として登録される）への対応を tasks.md へ埋め戻し、残っている作業を明示する。**元のユーザーストーリーのスコープには含まれない、不具合修正として追加されたフェーズ**である
+
+**背景**: 着手前に実データを収集した（openBD 1,535件 / NDL 230件）。issue 本文の推定「レーベル名の括弧付き接尾辞がタイトル末尾に付く」は openBD では確認できず、レーベル名は `summary.series` という別項目で返っていた。実際の原因は3つだった。
+
+1. 末尾のピリオドで照合キーが割れる。コミック1,129件中19シリーズが分裂していた。openBD の `チェンソーマン 5` と NDL の `チェンソーマン. 5` は同じ本であり、経路が違うだけで別作品になる
+2. 巻数表記の語彙不足（`巻94` / `巻ノ9` / `巻之3` / `vol.8` / `その1` / `#2`）。抽出率 83.3%
+3. 区切りの無い数字は正規表現では原理的に判別できない（`拳児2` は2巻、`ゴルゴ13` は作品名の一部）
+
+3 に対応するため、ML Kit GenAI Prompt API（オンデバイスの Gemini Nano）を第一経路として導入する方針を採用した（2026-09-04 承認）。**AI 経路は対応端末が限られる**（Pixel 9 以降、Galaxy S26 など。Galaxy S25 は Prompt API の対応表に無い）ため、規則ベースの経路を必ず残す
+
+### 実装済み
+
+- [X] T085 [P] `domain/src/main/kotlin/…/port/TitleAnalyzer.kt` に `TitleAnalyzer` ポートと `TitleAnalysis` を定義する（**Issue #4 対応**。ML Kit は Android 依存のため、`:domain` を純粋な Kotlin に保つ境界をここに引く — 憲法 原則III）
+- [X] T086 [P] `domain/src/main/kotlin/…/title/VolumeTitleParser.kt` の照合キー正規化（末尾の区切り記号・並列書名・大文字小文字）と巻数表記の語彙を実データに合わせて強化し、`VolumeTitleParserTest.kt` に実データ由来の表記を追加する（**Issue #4 対応**。上記1と2。末尾記号による分裂 19→0、抽出率 83.3%→88.7%）
+- [X] T087 [P] `domain/src/main/kotlin/…/title/TitleAnalysisPrompt.kt` と `TitleAnalysisResponseParser.kt` を純粋関数として実装し、テストを書く（**Issue #4 対応**。推論そのものは実機でしか試せないが、プロンプトと応答の解釈はユニットテストで仕様を固定する — 憲法 原則III。**元のタイトルから導けない作品名は捨てる**検証を含む）
+- [X] T088 [P] `domain/src/main/kotlin/…/title/` に `RuleBasedTitleAnalyzer` / `ChainedTitleAnalyzer` / `CachingTitleAnalyzer` と `analyzeOrFallback()` を実装し、`TitleAnalyzerChainTest.kt` にテストを書く（**Issue #4 対応**。どの経路が落ちても記録は完了することを固定する — 憲法 原則VI）
+- [X] T089 `data/src/main/kotlin/…/title/GenAiTitleAnalyzer.kt` と `data/src/main/kotlin/…/di/TitleModule.kt` を実装し、`gradle/libs.versions.toml` と `data/build.gradle.kts` に `com.google.mlkit:genai-prompt`（1.0.0-beta4）を追加する（**Issue #4 対応**。`checkStatus()` が `AVAILABLE` のときのみ推論し、`DOWNLOADABLE` なら裏でダウンロードして今回は規則ベースへ落とす）
+- [X] T090 `RecordVolumeUseCase` / `LinkProvisionalWorkUseCase` / `app/…/di/DomainModule.kt` を `TitleAnalyzer` 経由へ差し替える（**Issue #4 対応**。既定引数を規則ベースにしてあるため既存のユニットテストは変更不要）
+- [X] T091 `./gradlew :domain:test :data:testDebugUnitTest :app:testDebugUnitTest spotlessCheck assembleDebug` が全て通ることを確認した（**Issue #4 対応のビルドゲート**。`:domain` 122件 全通過、うち新規46件）
+- [X] T092 実機で動作を確認した（2026-09-04）。**確認内容の詳細は T096 で記録する**（憲法 原則IV）
+
+### 残作業
+
+- [X] T093 ~~plan.md の Complexity Tracking に AI 経路を逸脱として記録する~~ → **対応不要と判断した（2026-09-04）**。憲法 原則III がユニットテストを必須とするのは列挙された4つのロジック（棚番号の継承／読書状態の遷移／次に読むべき巻の判定／ISBN の妥当性検証）であり、タイトル解析はそこに含まれない。その4つは純粋 Kotlin のままテストで固定されている。**確率的に失敗しうることは許容する**（許容しないなら乱数を用いる実装も置けない）。技術選定の経緯は T094 で research.md R-002 に記録する
+- [X] T094 `research.md` R-002 と `plan.md` の技術スタック・Constitution Check を現在の実装に合わせて更新する per plan: R-002 (contradicts) — R-002 は照合を正規表現の正規化のみと記述したままである。実データの測定結果、AI 経路を第一経路とする構成、対応端末の制約、および原則V の観点（推論は端末内で完結するが ML Kit は利用状況メトリクスを Google へ送る）を記録する。T084 が Issue #1 で行った更新と同種の作業 → **完了（2026-09-04）**。R-003 と同じ形式で Decision を書き換え、「更新（2026-09-04, Issue #4）」段落に実データの測定結果と AI 経路の制約を記し、既存の Rationale を「当初 正規表現のみを採用した際の判断根拠」と明示した。照合キーの正規化規則は実装に合わせて改め、半角カタカナの全角化は規則から外した。plan.md は Summary・Primary Dependencies・G5 の評価を更新した
+- [X] T095 `contracts/` にタイトル解析経路の契約を追加する per plan: contracts (missing) — `BibliographySource` と同様に、`TitleAnalyzer` の「例外を投げない」「判定できなければ null を返す」契約と受け入れ基準を文書化する → **完了（2026-09-04）**。`contracts/title-analyzer.md` を新設し、契約・連鎖の規則・AI 経路と規則ベース経路の実装仕様・受け入れ基準 A-1〜A-9・テスト方針を記した。A-8 / A-9（`拳児2` と `ゴルゴ13` の区別）は実機確認項目とした。plan.md の contracts ツリーにも追加した
+- [X] T096 tasks.md の「実機確認の記録（T075）」に Issue #4 の実機確認結果を追記する per Constitution 原則IV (missing) — 確認した端末、AI 経路が実際に働いたか（`FeatureStatus`）、日本語の指示が通ったか、SC-001（30秒以内）へのレイテンシの影響を記す。**Issue #1 の未確認項目は引き続き未確認として残すこと** → **完了（2026-09-04）**。「確認済み（2026-09-04, Issue #4）」節を追加し、端末（Pixel 9 系）・AI 経路が実際に働いたこと・日本語で機能したことを記録した。未計測のレイテンシと、未確認の4項目（非対応端末でのフォールバック／モデル未ダウンロード時／レイテンシ）は「未確認のまま残る項目」へ追加した。**Issue #1 の未確認項目はそのまま残してある**
+- [X] T097 確認画面に自動照合の結果（どの既存作品へ紐づくか）を提示する per FR-027 (partial) — 現状の `ConfirmScreen.kt` はタイトルと巻数の編集欄のみで、照合先の作品を表示していない。FR-027 は「照合結果は確認画面に提示し、利用者が別の作品へ変更する、または新しい作品として分離することができなければならない」を求める。**表示していれば Issue #4 の分裂は記録の時点で気づけた**。追加の操作を強いてはならない（FR-028、憲法 原則VI） → **今回は対応しない（2026-09-04）**。Issue #4 のスコープ外とし、T098 とあわせて別 issue へ切り出す。**FR-027 の未達は解消していない**。[issue #6](https://github.com/LongbowXXX/reading-tracker/issues/6) として切り出した
+- [X] T098 既に別作品として分裂して登録された記録を統合する導線を、別 issue として切り出す per Issue #4「既存データの扱い」(missing) — Issue #4 では対象外とすると判断した。自動での再照合と手動統合のどちらを採るかは未決であり、`LinkProvisionalWorkUseCase`（暫定作品の紐づけ）は正式な作品どうしの統合には使えない → **完了（2026-09-04）**。[issue #7](https://github.com/LongbowXXX/reading-tracker/issues/7) として切り出した。案 A（マイグレーションでの自動再照合）／案 B（手動統合の画面）／案 C（候補提示と承認）を併記し、着手前に分裂件数を数えることを条件として残した
+
+**Checkpoint**: Issue #4 の対応は完了した。コード・ユニットテスト・ビルドゲート・実機確認（Pixel 9 系、AI 経路が実際に働くことを確認）、および仕様書への反映（research.md R-002 / plan.md / contracts/title-analyzer.md）まで済んでいる。
+
+**このフェーズから外に出した項目**:
+
+- [issue #6](https://github.com/LongbowXXX/reading-tracker/issues/6) 確認画面が自動照合の結果を提示していない（**FR-027 の未達は解消していない**）
+- [issue #7](https://github.com/LongbowXXX/reading-tracker/issues/7) 修正前に分裂して登録された記録の統合
+
+**未確認のまま残る実機項目**は「実機確認の記録（T075）」を参照。AI 経路の中核（`拳児2` と `ゴルゴ13` の区別）は確認済みで、残るのは非対応端末でのフォールバック・モデル未ダウンロード時の初回動作・レイテンシの実測値である

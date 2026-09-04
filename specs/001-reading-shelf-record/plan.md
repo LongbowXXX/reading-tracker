@@ -8,13 +8,13 @@
 
 漫画喫茶の個室で1冊読み終えた（または中断した）ときに、バーコード読み取りまたは ISBN 手入力で作品を特定し、読書状態と棚番号を一連の操作で記録する。次の来店時には店舗を選ぶだけで、その店で読める読みかけ作品が棚番号つきで一覧され、次に取るべき巻が分かる。
 
-技術的な要点は3つ。第一に、棚番号の継承・次巻判定・ISBN 検証・作品照合を **`:domain` という Android 非依存の Gradle モジュール**へ隔離し、JUnit で仕様を固定する（憲法 原則III）。第二に、**棚番号を「店舗 × 巻」の UNIQUE 制約**で表現し、店舗独立性をスキーマで担保する。第三に、差し替えが予想される2箇所（書誌情報の取得元、バーコード読み取り方式）をインターフェースで抽象化し、実機検証の結果による方針転換が UI とドメインへ波及しないようにする。
+技術的な要点は3つ。第一に、棚番号の継承・次巻判定・ISBN 検証・作品照合を **`:domain` という Android 非依存の Gradle モジュール**へ隔離し、JUnit で仕様を固定する（憲法 原則III）。第二に、**棚番号を「店舗 × 巻」の UNIQUE 制約**で表現し、店舗独立性をスキーマで担保する。第三に、差し替えが予想される3箇所（書誌情報の取得元、バーコード読み取り方式、タイトル解析方式）をインターフェースで抽象化し、実機検証の結果による方針転換が UI とドメインへ波及しないようにする。**タイトル解析の抽象化は Issue #4 でオンデバイス AI を導入した際に加えたもので、この境界により ML Kit（Android 依存）を `:domain` へ持ち込まずに済んでいる**（research.md R-002）。
 
 ## Technical Context
 
 **Language/Version**: Kotlin 2.x / JVM ターゲット 17
 
-**Primary Dependencies**: Jetpack Compose（BOM）、Room（KSP）、Kotlin Coroutines / Flow、Hilt、CameraX、`com.google.mlkit:barcode-scanning`（バンドル版）、OkHttp、kotlinx.serialization。依存の版は Gradle バージョンカタログ（`gradle/libs.versions.toml`）で一元管理する
+**Primary Dependencies**: Jetpack Compose（BOM）、Room（KSP）、Kotlin Coroutines / Flow、Hilt、CameraX、`com.google.mlkit:barcode-scanning`（バンドル版）、`com.google.mlkit:genai-prompt`（オンデバイス AI。Issue #4 / research.md R-002）、OkHttp、kotlinx.serialization。依存の版は Gradle バージョンカタログ（`gradle/libs.versions.toml`）で一元管理する
 
 **Storage**: Room（端末内 SQLite）。外部サーバは持たない（憲法 原則V）
 
@@ -53,6 +53,7 @@
 - **G2**: [data-model.md](./data-model.md) に所有・購入・蔵書に相当する列を置いていない。`ReadingStatus` は `READ` / `PAUSED` の2値で、契約書（[contracts/domain-api.md](./contracts/domain-api.md)）に「第3の値を追加しないこと」と明記した。
 - **G3**: `:domain` を `kotlin("jvm")` モジュールとするため、Android 依存を書くとコンパイルが通らない。原則違反が実装時に自動検出される（[research.md](./research.md) R-004）。
 - **G5**: 外部通信は書誌取得の2経路のみ。通知（WorkManager）は D群がスコープ外のため今回登場しない。
+- **G5 の更新（2026-09-04, Issue #4）**: タイトル解析にオンデバイス AI（ML Kit GenAI Prompt API / Gemini Nano）を追加した。**推論は端末内で完結し、入出力はネットワークへ出ない**ため原則V に適合する（AICore はインターネットへ直接アクセスせず、モデルの配信も Private Compute Services 経由）。ただし ML Kit は API の利用状況メトリクスを Google へ送る（ML Kit 利用規約 Privacy）。**送られるのは利用状況であり、読書記録そのものではない。** 自前の配信サーバは引き続き持たない。
 
 ### Phase 1 設計後の再評価
 
@@ -77,7 +78,8 @@ specs/001-reading-shelf-record/
 ├── contracts/           # Phase 1 出力: インターフェース契約
 │   ├── domain-api.md
 │   ├── bibliography-source.md
-│   └── barcode-scanner.md
+│   ├── barcode-scanner.md
+│   └── title-analyzer.md   # Issue #4 で追加
 ├── checklists/
 │   └── requirements.md
 └── tasks.md             # Phase 2 出力（/speckit-tasks が作成。本コマンドでは作らない）

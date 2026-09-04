@@ -40,6 +40,29 @@ CI 待ちを避けるため `--no-daemon --console=plain` を付けて実行す�
 - ドメインロジックとそのユニットテストを、UI やカメラ連携より先に実装する（憲法 原則III）。
 - 実機でしか検証できない項目は「実機確認が必要」と明示し、未確認のまま完了としない（憲法 原則IV）。
 - 人間が判断すべき事項を推測で決めない。迷う点は `[NEEDS CLARIFICATION]` として残す。
+- 図を作る場合は Archify を使い、Mermaid 等で新規作成しない（憲法 図の作成）。
+
+## 図の作成
+
+図は Archify スキルで作成する（憲法 図の作成）。Mermaid 等の他形式で新規に図を作らない。
+
+- ソース（JSON IR）と生成 HTML の両方を `docs/diagrams/` に置き、両方をコミットする。
+- 命名は `<topic>.<type>.json` / `<topic>.html`。`<type>` は
+  `architecture` / `workflow` / `sequence` / `dataflow` / `lifecycle` のいずれか。
+- 図中のラベル・注釈は日本語（憲法 原則VII）。
+
+```powershell
+$archify = "$env:USERPROFILE\.claude\skills\archify\bin\archify.mjs"
+node $archify validate architecture docs\diagrams\<topic>.architecture.json --quality showcase --json
+node $archify deliver  architecture docs\diagrams\<topic>.architecture.json docs\diagrams\<topic>.html --quality showcase --json
+```
+
+`deliver` のレシートが `ok: true`、`validation.checksPassed` = `checkCount`（showcase は 9）、
+`compositionStatus: pass`、`errors`/`warnings` ともに 0 であることを確認してからコミットする。
+条件を満たさない図はコミットしない。
+
+Archify はグローバル（`~/.claude/skills/archify`）に導入されており、リポジトリには含まれない。
+未導入の環境では図を新規作成しないこと（既存の図は HTML をブラウザで開けば閲覧できる）。
 
 ## Spec Kit のフロー
 

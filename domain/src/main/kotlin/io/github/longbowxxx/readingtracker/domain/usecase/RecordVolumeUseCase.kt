@@ -8,8 +8,10 @@ import io.github.longbowxxx.readingtracker.domain.model.ShelfNumber
 import io.github.longbowxxx.readingtracker.domain.model.Volume
 import io.github.longbowxxx.readingtracker.domain.model.Work
 import io.github.longbowxxx.readingtracker.domain.port.ReadingRepository
+import io.github.longbowxxx.readingtracker.domain.port.TitleAnalyzer
 import io.github.longbowxxx.readingtracker.domain.shelf.resolveInheritedShelfNumber
-import io.github.longbowxxx.readingtracker.domain.title.parseVolumeTitle
+import io.github.longbowxxx.readingtracker.domain.title.RuleBasedTitleAnalyzer
+import io.github.longbowxxx.readingtracker.domain.title.analyzeOrFallback
 import java.time.Instant
 
 /**
@@ -48,6 +50,7 @@ data class RecordResult(val workId: Long, val volumeId: Long, val volumeNumber: 
 class RecordVolumeUseCase(
     private val repository: ReadingRepository,
     private val updateRecordUseCase: UpdateRecordUseCase,
+    private val titleAnalyzer: TitleAnalyzer = RuleBasedTitleAnalyzer(),
     private val clock: () -> Instant = Instant::now,
 ) {
     /**
@@ -57,14 +60,14 @@ class RecordVolumeUseCase(
      * 混ざることはない（FR-014）。
      */
     suspend fun suggestShelfNumber(storeId: Long, rawTitle: String, volumeNumberOverride: Int? = null): ShelfNumber? {
-        val parsed = parseVolumeTitle(rawTitle)
+        val parsed = titleAnalyzer.analyzeOrFallback(rawTitle)
         val work = repository.findWorkByMatchKey(parsed.matchKey) ?: return null
         val targetVolumeNumber = volumeNumberOverride ?: parsed.volumeNumber
         return resolveInheritedShelfNumber(targetVolumeNumber, repository.listPlacements(storeId, work.id))
     }
 
     suspend fun execute(command: RecordCommand): RecordResult {
-        val parsed = parseVolumeTitle(command.rawTitle)
+        val parsed = titleAnalyzer.analyzeOrFallback(command.rawTitle)
         val volumeNumber = command.volumeNumberOverride ?: parsed.volumeNumber
 
         val existingVolume = command.isbn?.let { repository.findVolumeByIsbn(it) }
