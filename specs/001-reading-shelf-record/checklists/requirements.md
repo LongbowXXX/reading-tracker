@@ -41,3 +41,6 @@
   - 同一店舗での同一巻の再記録 → 既存記録の編集として扱う（FR-029）
 - 状態が変化した項目は `No [NEEDS CLARIFICATION] markers remain` の1件のみ。合格から不合格へ戻った項目（リグレッション）はない。
 - 実装詳細の混入について: FR-025 が「外部データソースへの参照」に言及しているが、具体的な技術・製品名は含めておらず、データの所在（端末内）という業務制約の記述に留めている。
+- **2026-09-05 の再検証（Issue #9 の追加分）でも全16項目が合格**。FR-032〜FR-035・SC-008・SC-009・Edge Cases 3件・Assumptions 4件の追加、および SC-006 の削除を対象に確認した。`[NEEDS CLARIFICATION]` の残存はなく、リグレッションもない。
+  - 要求への遡及: `/speckit-analyze` が「FR-032〜FR-035 が要求 ID を持たない」（憲法 原則I）を検出したため、`docs/requirements.md` を承認のうえ改訂し（3.2 前提条件・3.3 制約・G 群 G-1/G-2）、各 FR を G-1 / G-2 へ紐づけて解消した。
+  - 実装詳細の混入について: FR-032〜FR-035 と SC-008・SC-009 は「オンデバイス AI」という語を含むが、これは製品名ではなく**サポート対象端末を定める業務上の前提**（要求定義書 3.2）である。ML Kit・Gemini Nano といった具体の技術名は spec に持ち込んでおらず、[research.md](../research.md) R-008 と [contracts/ai-availability.md](../contracts/ai-availability.md) に留めている。

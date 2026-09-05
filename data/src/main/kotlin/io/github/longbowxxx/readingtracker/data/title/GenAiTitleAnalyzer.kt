@@ -1,9 +1,7 @@
 package io.github.longbowxxx.readingtracker.data.title
 
 import android.util.Log
-import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
-import com.google.mlkit.genai.prompt.Generation
 import com.google.mlkit.genai.prompt.GenerativeModel
 import com.google.mlkit.genai.prompt.TextPart
 import com.google.mlkit.genai.prompt.generateContentRequest
@@ -12,11 +10,6 @@ import io.github.longbowxxx.readingtracker.domain.port.TitleAnalyzer
 import io.github.longbowxxx.readingtracker.domain.title.buildTitleAnalysisPrompt
 import io.github.longbowxxx.readingtracker.domain.title.parseTitleAnalysisResponse
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * オンデバイス AI（ML Kit GenAI Prompt API / Gemini Nano）でタイトルを解析する（Issue #4）。
@@ -25,8 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean
  * （`拳児2` は2巻、`ゴルゴ13` は作品名）——を、世界知識で判断させることが狙い。
  *
  * **判定できない場合は必ず null を返す。** 呼び出し側は規則ベースの経路へ落ちる。
- * 対応端末は限られる（Pixel 9 以降、Galaxy S26 など。Galaxy S25 は Prompt API の
- * 対応表に含まれない）ため、**null を返す経路のほうが多数派になる**。
+ * ここに残るのは「`AVAILABLE` なら推論し、それ以外・失敗時は null を返す」ことだけであり、
+ * **モデルのダウンロードを促す責務は持たない**。起動ゲート（contracts/ai-availability.md、
+ * Issue #9）が `AVAILABLE` でなければ本体へ入れないため、記録の最中に未取得を検知する経路は
+ * 実際には通らない。それでも判定を残すのは、起動後に端末側の状態が変わりうるためである。
+ *
+ * [model] を外から受け取るのは、起動ゲートの判定（`GenAiAvailability`）と同じクライアントを
+ * 共有するため（`AiModule`）。判定と推論で別の接続を張らない。
  *
  * 推論は端末内で完結し、入出力はネットワークへ出ない（憲法 原則V）。ただし ML Kit は
  * API の利用状況メトリクスを Google へ送る点に注意（ML Kit 利用規約 Privacy）。
@@ -35,13 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * ここで検証できるのはプロンプトの組み立てと応答の解釈だけであり、それらは `:domain` 側に
  * 純粋関数として置いてテストしてある。
  */
-class GenAiTitleAnalyzer(private val downloadScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)) :
-    TitleAnalyzer {
-    private val model: GenerativeModel by lazy { Generation.getClient() }
-
-    /** モデルのダウンロードは1度だけ促す。記録操作の裏で進める。 */
-    private val downloadRequested = AtomicBoolean(false)
-
+class GenAiTitleAnalyzer(private val model: GenerativeModel) : TitleAnalyzer {
     override suspend fun analyze(rawTitle: String): TitleAnalysis? {
         if (rawTitle.isBlank()) return null
 
@@ -49,13 +41,8 @@ class GenAiTitleAnalyzer(private val downloadScope: CoroutineScope = CoroutineSc
             when (val status = model.checkStatus()) {
                 FeatureStatus.AVAILABLE -> infer(rawTitle)
 
-                FeatureStatus.DOWNLOADABLE -> {
-                    // ダウンロードを待つと記録操作が止まる。裏で進め、今回は規則ベースへ落とす
-                    requestDownload()
-                    null
-                }
-
                 else -> {
+                    // 起動ゲートを通ったあとに状態が変わった場合。記録は止めず規則ベースへ落とす
                     Log.d(TAG, "オンデバイス AI を利用できません: status=$status")
                     null
                 }
@@ -83,27 +70,6 @@ class GenAiTitleAnalyzer(private val downloadScope: CoroutineScope = CoroutineSc
 
         val response = model.generateContent(request)
         return parseTitleAnalysisResponse(response.candidates.firstOrNull()?.text, rawTitle)
-    }
-
-    private fun requestDownload() {
-        if (!downloadRequested.compareAndSet(false, true)) return
-
-        downloadScope.launch {
-            try {
-                model.download().collect { status ->
-                    when (status) {
-                        is DownloadStatus.DownloadFailed -> Log.w(TAG, "Gemini Nano のダウンロードに失敗しました", status.e)
-                        DownloadStatus.DownloadCompleted -> Log.i(TAG, "Gemini Nano のダウンロードが完了しました")
-                        else -> Unit
-                    }
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini Nano のダウンロードを開始できませんでした", e)
-                downloadRequested.set(false)
-            }
-        }
     }
 
     private companion object {

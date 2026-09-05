@@ -68,7 +68,7 @@ class ChainedTitleAnalyzer(
 | 項目 | 内容 |
 | --- | --- |
 | 依存 | `com.google.mlkit:genai-prompt:1.0.0-beta4`（Gemini Nano / AICore） |
-| 可用性 | `checkStatus()` が `AVAILABLE` のときのみ推論する。`DOWNLOADABLE` ならダウンロードを裏で開始し、その回は `null` を返す。それ以外は `null` |
+| 可用性 | `checkStatus()` が `AVAILABLE` のときのみ推論する。それ以外、および推論の失敗時は `null` を返す。**モデルのダウンロード催促はここでは行わない**（[ai-availability.md](./ai-availability.md) の起動ゲートの責務 — Issue #9） |
 | 対応端末 | Pixel 9 以降、Galaxy S26、Z Fold7 など。**Galaxy S25 は Prompt API の対応表に含まれない**。非対応端末では常に `null` が返る |
 | 推論パラメータ | `temperature = 0` / `topK = 1` / `candidateCount = 1` / `seed` 固定 / `maxOutputTokens = 128` |
 | プロンプト | `buildTitleAnalysisPrompt()`（`:domain` の純粋関数）。**指示文は英語**。Prompt API には対応言語の公式記載が無いため（research.md R-002） |
@@ -77,6 +77,13 @@ class ChainedTitleAnalyzer(
 | 巻数の範囲 | 1〜9999。範囲外は誤読とみなし `null` |
 | プライバシー | 推論は端末内で完結し、入出力はネットワークへ出ない（憲法 原則V）。ML Kit は API の利用状況メトリクスを Google へ送る |
 | 制限 | アプリがフォアグラウンドにあるときのみ推論できる。バックグラウンドからは不可 |
+
+**更新（2026-09-05, Issue #9）**: 起動ゲート（[ai-availability.md](./ai-availability.md)）が
+「`AVAILABLE` でなければ本体に入れない」ことを保証するため、**モデルのダウンロード催促の責務が本実装から外れた**。
+当初は `DOWNLOADABLE` を検知して裏で `download()` を開始し、その回は `null` を返す規定だったが、
+この経路と二重起動を防ぐためのフラグは削除する（tasks.md T105）。本実装に残るのは
+「`AVAILABLE` なら推論し、それ以外・失敗時は `null` を返す」だけであり、
+規則ベースへの連鎖（`ChainedTitleAnalyzer`）は推論の失敗・時間切れに対する保険として引き続き機能する。
 
 ## 実装: 規則ベース（RuleBasedTitleAnalyzer）
 

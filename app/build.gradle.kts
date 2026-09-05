@@ -23,6 +23,13 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+
+            // FR-035 の実機確認（配布ビルドに「非対応のまま続行」が現れないこと）を行うための逃げ道。
+            // 既定では署名しない。`-PdebugSignedRelease` を付けたときだけ debug の鍵で署名する。
+            // **配布用の鍵ではない。** 既定を変えないのは、うっかり debug 鍵の APK を配布しないため
+            if (project.hasProperty("debugSignedRelease")) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 
@@ -33,6 +40,8 @@ android {
 
     buildFeatures {
         compose = true
+        // 起動ゲートの「非対応のまま続行」を開発ビルドに限るため BuildConfig.DEBUG を参照する（FR-035）
+        buildConfig = true
     }
 }
 
