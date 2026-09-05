@@ -339,6 +339,29 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 **AI 非対応端末での動作は未確認**。Pixel 9 系でしか試しておらず、`FeatureStatus.UNAVAILABLE` から
 規則ベースへ落ちる経路は実機で通っていない。ユニットテスト（`TitleAnalyzerChainTest.kt`）では固定済み。
 
+### 確認済み（2026-09-05, Issue #9 起動ゲート）
+
+[quickstart.md](./quickstart.md) 4.6 の A〜D 群すべてを実機で確認した（利用者による確認、2026-09-05）。
+
+| 群 | 項目 | 結果 |
+| --- | --- | --- |
+| A | 対応端末・モデル取得済みで起動すると素通りして記録画面へ入る（FR-032） | 問題なし |
+| B | モデル未取得のとき、非対応ではなく準備待ちの画面と「ダウンロードを開始」が出る（FR-034） | 問題なし |
+| B | 準備待ちで放置しても取得が自動で始まらない（FR-034。本設計の要） | 問題なし |
+| B | 開始を選ぶと取得が進み、完了後は追加操作なく本体へ進む（SC-009） | 問題なし |
+| B | 取得に失敗すると準備待ちへ戻り、失敗表示と再試行が出る（FR-034） | 問題なし |
+| C | 非対応端末で警告が出て、記録・参照のいずれの画面にも到達できない（FR-033, SC-008） | 問題なし |
+| C | 再試行で確認中へ戻り、判定がやり直される（FR-032） | 問題なし |
+| C | 開発ビルドでのみ「非対応のまま続行」が現れる（FR-035） | 問題なし |
+| D | **配布ビルド（release）に「非対応のまま続行」が現れない**（FR-035） | 問題なし |
+
+D 群の確認には release ビルドの署名が要るが、配布用の鍵は用意していない。そのため
+`-PdebugSignedRelease` を付けたときだけ debug の鍵で署名する逃げ道を `app/build.gradle.kts` に設けた
+（**配布用の鍵ではない。既定の `assembleRelease` は未署名のまま**）。確認に用いた APK の署名は
+`apksigner` で `CN=Android Debug` であることを確認済み。
+
+なお quickstart 4.6 の項目8（「確認できませんでした」の文言）は防御的な経路であり、実機の確認対象ではない。
+
 ### 未確認のまま残る項目
 
 以下は実機で一度も動作させていない。**次に実機へ導入する際の確認対象**とする。
@@ -354,8 +377,8 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 | Issue #1: 片手操作での使用感 | 片手操作でのスキャン成功率、および旧 Google Code Scanner 実装との体感比較 |
 | Issue #1: 戻る操作での手入力への遷移 | スキャン画面で戻る操作をした際、エラーを出さずに ISBN 手入力へ落ちること |
 | Issue #1: バンドル版 ML Kit のオフライン動作 | 端末を機内モードにした状態でも初回スキャンが機能すること（バンドル版採用の確認） |
-| Issue #4: AI 非対応端末でのフォールバック | Prompt API 非対応の端末で `FeatureStatus.UNAVAILABLE` から規則ベースへ落ち、記録が完了すること |
-| Issue #4: モデル未ダウンロード時の初回動作 | `DOWNLOADABLE` の状態で記録を行った場合に、待たされずに規則ベースで完了し、ダウンロードが裏で進むこと |
+| ~~Issue #4: AI 非対応端末でのフォールバック~~ | **Issue #9 で意味が変わった**。非対応端末はフォールバックではなくゲートでブロックする。2026-09-05 に C 群として確認済み |
+| ~~Issue #4: モデル未ダウンロード時の初回動作~~ | **Issue #9 で意味が変わった**。裏でのダウンロードではなく準備待ちの画面を出す。2026-09-05 に B 群として確認済み |
 | Issue #4: 推論のレイテンシ | 2,500 ms の打ち切りに収まること、および SC-001（30秒以内）を損なわないこと |
 
 これらはいずれも自動テストで代替できない。ドメイン層とデータ層の振る舞いは
@@ -420,28 +443,28 @@ T014 domain/src/test/kotlin/…/shelf/ShelfNumberBulkUpdateTest.kt
 
 ### ドメイン層（先に実装する — 憲法 原則III）
 
-- [ ] T100 [P] `domain/src/main/kotlin/…/port/AiAvailability.kt` に `AiAvailability` ポート・`AiAvailabilityStatus`・`AiPreparation` を定義する（**Issue #9 対応**。ML Kit は Android 依存のため、`:domain` を純粋な Kotlin に保つ境界をここに引く — 憲法 原則III。contracts/ai-availability.md のインターフェース節に対応）
-- [ ] T101 `domain/src/test/kotlin/…/ai/AiGateStateTest.kt` に、判定結果・準備結果から**確認中・利用可・準備待ち・取得中・非対応の5状態**への写像と遷移のテストを**先に**書き、失敗することを確認する（**Issue #9 対応**。contracts/ai-availability.md の受け入れ基準 A-1〜A-8 に対応。`AiAvailability` のフェイク実装を用い、Android もネットワークも使わない。**準備待ちの間に `prepare()` が購読されないこと**をフェイクの購読回数で固定する — FR-034）
-- [ ] T102 `domain/src/main/kotlin/…/ai/AiGateState.kt` を**5状態**（確認中・利用可・準備待ち・取得中・非対応）で実装し、T101 のテストを通す（**Issue #9 対応**。`PREPARING` は取得を開始していない「準備待ち」へ写し、取得開始の操作を受けて初めて「取得中」へ遷移する。取得の失敗は準備待ちへ戻す — FR-034。`UNSUPPORTED` と「判定できなかった」は同じ状態へ写し、文言の差だけを画面側に残す — FR-033）
+- [X] T100 [P] `domain/src/main/kotlin/…/port/AiAvailability.kt` に `AiAvailability` ポート・`AiAvailabilityStatus`・`AiPreparation` を定義する（**Issue #9 対応**。ML Kit は Android 依存のため、`:domain` を純粋な Kotlin に保つ境界をここに引く — 憲法 原則III。contracts/ai-availability.md のインターフェース節に対応）
+- [X] T101 `domain/src/test/kotlin/…/ai/AiGateStateTest.kt` に、判定結果・準備結果から**確認中・利用可・準備待ち・取得中・非対応の5状態**への写像と遷移のテストを**先に**書き、失敗することを確認する（**Issue #9 対応**。contracts/ai-availability.md の受け入れ基準 A-1〜A-8 に対応。`AiAvailability` のフェイク実装を用い、Android もネットワークも使わない。**準備待ちの間に `prepare()` が購読されないこと**をフェイクの購読回数で固定する — FR-034）
+- [X] T102 `domain/src/main/kotlin/…/ai/AiGateState.kt` を**5状態**（確認中・利用可・準備待ち・取得中・非対応）で実装し、T101 のテストを通す（**Issue #9 対応**。`PREPARING` は取得を開始していない「準備待ち」へ写し、取得開始の操作を受けて初めて「取得中」へ遷移する。取得の失敗は準備待ちへ戻す — FR-034。`UNSUPPORTED` と「判定できなかった」は同じ状態へ写し、文言の差だけを画面側に残す — FR-033）
 
 ### データ層
 
-- [ ] T103 `data/src/main/kotlin/…/ai/GenAiAvailability.kt` を実装する（**Issue #9 対応**。可用性の判定はタイトル解析とは別の責務であるため `title/` ではなく `ai/` に置く。`checkStatus()` の `FeatureStatus` を 3 値へ写像し、例外は `UNSUPPORTED` へ畳み込む。`prepare()` は `download()` の `DownloadStatus` を `AiPreparation` へ写す。結果をキャッシュしない — FR-032）
-- [ ] T104 `data/src/main/kotlin/…/di/AiModule.kt` を新設して `GenerativeModel` を単一インスタンスとして提供し、`AiAvailability` の実装を束ねる。`data/src/main/kotlin/…/di/TitleModule.kt` は共有された `GenerativeModel` を受け取る形へ改める（**Issue #9 対応**。判定と推論で別のクライアントを持たせない）
-- [ ] T105 `data/src/main/kotlin/…/title/GenAiTitleAnalyzer.kt` から `requestDownload()` と `DOWNLOADABLE` 分岐、および `downloadRequested`（`AtomicBoolean`）と `downloadScope` を削除する（**Issue #9 対応**。起動ゲートが `AVAILABLE` を保証するため、解析側の二重のダウンロード催促が不要になる。KDoc の「対応端末は限られるため null を返す経路のほうが多数派になる」という記述も現状に合わせて改める。あわせて [contracts/title-analyzer.md](./contracts/title-analyzer.md) の「可用性」の規定を、`DOWNLOADABLE` で裏からダウンロードする内容から「`AVAILABLE` なら推論し、それ以外・失敗時は `null` を返す」へ**同時に改訂する**。契約と実装が食い違ったまま残らないようにする）
+- [X] T103 `data/src/main/kotlin/…/ai/GenAiAvailability.kt` を実装する（**Issue #9 対応**。可用性の判定はタイトル解析とは別の責務であるため `title/` ではなく `ai/` に置く。`checkStatus()` の `FeatureStatus` を 3 値へ写像し、例外は `UNSUPPORTED` へ畳み込む。`prepare()` は `download()` の `DownloadStatus` を `AiPreparation` へ写す。結果をキャッシュしない — FR-032）
+- [X] T104 `data/src/main/kotlin/…/di/AiModule.kt` を新設して `GenerativeModel` を単一インスタンスとして提供し、`AiAvailability` の実装を束ねる。`data/src/main/kotlin/…/di/TitleModule.kt` は共有された `GenerativeModel` を受け取る形へ改める（**Issue #9 対応**。判定と推論で別のクライアントを持たせない）
+- [X] T105 `data/src/main/kotlin/…/title/GenAiTitleAnalyzer.kt` から `requestDownload()` と `DOWNLOADABLE` 分岐、および `downloadRequested`（`AtomicBoolean`）と `downloadScope` を削除する（**Issue #9 対応**。起動ゲートが `AVAILABLE` を保証するため、解析側の二重のダウンロード催促が不要になる。KDoc の「対応端末は限られるため null を返す経路のほうが多数派になる」という記述も現状に合わせて改める。あわせて [contracts/title-analyzer.md](./contracts/title-analyzer.md) の「可用性」の規定を、`DOWNLOADABLE` で裏からダウンロードする内容から「`AVAILABLE` なら推論し、それ以外・失敗時は `null` を返す」へ**同時に改訂する**。契約と実装が食い違ったまま残らないようにする）
 
 ### UI 層
 
-- [ ] T106 `app/src/main/kotlin/…/ui/ai/AiGateViewModel.kt` を実装する（**Issue #9 対応**。`AiAvailability` の呼び出しと `AiGateState` の保持のみを行う薄い層とし、判断ロジックは `:domain` に置いたままにする。**`prepare()` の購読は利用者の操作を起点とし**、起動時の判定で `PREPARING` を得ても自動では購読しない — FR-034）
-- [ ] T107 `app/src/main/kotlin/…/ui/ai/AiGateScreen.kt` を実装する（**Issue #9 対応**。確認中・準備待ち・取得中・非対応の4画面と各導線。準備待ちの画面には準備が必要である旨と「ダウンロードを開始」を置き、**表示しただけで自動購読してはならない** — FR-034。取得中は不定の進捗を出し、失敗時は準備待ちへ戻して失敗した旨と再試行を出す。非対応の画面には `BuildConfig.DEBUG` のときだけ「非対応のまま続行（開発用）」を出す — FR-035。配布ビルドでこの導線が存在してはならない）
-- [ ] T108 `app/src/main/kotlin/…/MainActivity.kt` で `ReadingTrackerNavGraph` を `AiGateScreen` で包む（**Issue #9 対応**。ゲートはアプリ全体に掛け、AI を使わない画面も含めて止める — SC-008。`AVAILABLE` のときは素通りし、記録の主導線のタップ数を増やさない — 憲法 原則VI, SC-009）
+- [X] T106 `app/src/main/kotlin/…/ui/ai/AiGateViewModel.kt` を実装する（**Issue #9 対応**。`AiAvailability` の呼び出しと `AiGateState` の保持のみを行う薄い層とし、判断ロジックは `:domain` に置いたままにする。**`prepare()` の購読は利用者の操作を起点とし**、起動時の判定で `PREPARING` を得ても自動では購読しない — FR-034）
+- [X] T107 `app/src/main/kotlin/…/ui/ai/AiGateScreen.kt` を実装する（**Issue #9 対応**。確認中・準備待ち・取得中・非対応の4画面と各導線。準備待ちの画面には準備が必要である旨と「ダウンロードを開始」を置き、**表示しただけで自動購読してはならない** — FR-034。取得中は不定の進捗を出し、失敗時は準備待ちへ戻して失敗した旨と再試行を出す。非対応の画面には `BuildConfig.DEBUG` のときだけ「非対応のまま続行（開発用）」を出す — FR-035。配布ビルドでこの導線が存在してはならない）
+- [X] T108 `app/src/main/kotlin/…/MainActivity.kt` で `ReadingTrackerNavGraph` を `AiGateScreen` で包む（**Issue #9 対応**。ゲートはアプリ全体に掛け、AI を使わない画面も含めて止める — SC-008。`AVAILABLE` のときは素通りし、記録の主導線のタップ数を増やさない — 憲法 原則VI, SC-009）
 
 ### 検証
 
-- [ ] T109 `.\gradlew.bat :domain:test :data:testDebugUnitTest :app:testDebugUnitTest spotlessCheck assembleDebug` が全て通ることを確認する（**Issue #9 対応のビルドゲート**）
-- [ ] T110 実機で [quickstart.md](./quickstart.md) 4.6 の9項目を確認し、結果を「実機確認の記録（T075）」へ追記する（**Issue #9 対応**。対応端末での素通りと準備画面からの自動遷移、非対応端末での警告と到達不能、再試行、開発ビルドのみの続行導線。**未確認の項目が残る場合は完了報告時に明示する** — 憲法 原則IV）
-- [ ] T111 [P] `README.md` に対応端末の条件（オンデバイス AI が動作する端末に限る）と、非対応端末では起動時に警告して利用できないことを明記する（**Issue #9 対応**。要求定義書 3.2 前提条件および G-1 の利用者向け告知にあたる。導入前に判断できるようにする）
+- [X] T109 `.\gradlew.bat :domain:test :data:testDebugUnitTest :app:testDebugUnitTest spotlessCheck assembleDebug` が全て通ることを確認する（**Issue #9 対応のビルドゲート**）
+- [X] T110 実機で [quickstart.md](./quickstart.md) 4.6 を確認した（2026-09-05）。**A〜D 群のすべてが問題なし**。結果は「実機確認の記録（T075）」内の「確認済み（2026-09-05, Issue #9 起動ゲート）」に記録した（**Issue #9 対応**。項目8は防御的経路のため実機の対象外 — 憲法 原則IV）
+- [X] T111 [P] `README.md` に対応端末の条件（オンデバイス AI が動作する端末に限る）と、非対応端末では起動時に警告して利用できないことを明記する（**Issue #9 対応**。要求定義書 3.2 前提条件および G-1 の利用者向け告知にあたる。導入前に判断できるようにする）
 
-**Checkpoint**: このフェーズの完了条件は T109 のビルドゲートと T110 の実機確認の双方である。**T110 が済むまで完了としない**（憲法 原則IV）
+**Checkpoint**: 完了（2026-09-05）。T109 のビルドゲート（`:domain` 135件 / `:data` 37件 / `:app` 6件 全通過、spotlessCheck・assembleDebug 通過）と、T110 の実機確認（quickstart 4.6 の A〜D 群すべて問題なし）の双方が済んでいる（憲法 原則IV）
 
 **既存の未確認項目への影響**: 「実機確認の記録（T075）」の未確認項目のうち「非対応端末でのフォールバック」と「モデル未ダウンロード時の初回動作」は、本フェーズで**フォールバックではなくゲートによるブロック／準備画面**へ意味が変わる。T110 の確認をもって置き換える

@@ -1,5 +1,6 @@
 package io.github.longbowxxx.readingtracker.data.di
 
+import com.google.mlkit.genai.prompt.GenerativeModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,16 +21,19 @@ import javax.inject.Singleton
  *
  * 連鎖の外側に [CachingTitleAnalyzer] を置くのは、1冊の記録で同じタイトルが
  * 2回解析されるのを防ぐためと、推論結果の揺れで照合キーが変わるのを抑えるため。
+ *
+ * [GenerativeModel] は [AiModule] が提供する1インスタンスを受け取る。起動ゲートの判定と
+ * 推論で別のクライアントを持たせない（Issue #9、contracts/ai-availability.md）。
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object TitleModule {
     @Provides
     @Singleton
-    fun provideTitleAnalyzer(): TitleAnalyzer = CachingTitleAnalyzer(
+    fun provideTitleAnalyzer(model: GenerativeModel): TitleAnalyzer = CachingTitleAnalyzer(
         ChainedTitleAnalyzer(
             listOf(
-                GenAiTitleAnalyzer(),
+                GenAiTitleAnalyzer(model),
                 RuleBasedTitleAnalyzer(),
             ),
         ),

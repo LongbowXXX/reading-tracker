@@ -9,6 +9,20 @@
 - 読みたい作品と新刊を管理する
 - 店舗ごとの棚番号情報を記録して、来店時に迷わないようにする
 
+## 対応端末
+
+**オンデバイス AI（ML Kit GenAI Prompt API / Gemini Nano）が動作する端末に限ります。**
+作品の判別に AI を用いるため、非対応の端末では起動時に警告を表示し、記録・参照のいずれの機能も
+利用できません（回避手段は開発ビルドにのみあります）。
+
+- 対応端末の例: Pixel 9 以降、Galaxy S26、Galaxy Z Fold7 など。**Galaxy S25 は Prompt API の対応表に含まれません**
+- 対応端末でもモデルが未取得の場合は、起動時に準備が必要である旨と「ダウンロードを開始」の導線を表示します。
+  取得には時間と通信量がかかるため、**開始は利用者の操作を起点とし、アプリが自動では始めません**。
+  Wi-Fi に接続した状態での実行をおすすめします
+- 利用可否は端末側の更新で変わりうるため、**起動のたびに判定します**
+
+判定の詳細は [specs/001-reading-shelf-record/contracts/ai-availability.md](specs/001-reading-shelf-record/contracts/ai-availability.md) を参照してください。
+
 ## 要件定義
 
 要件の詳細は [docs/requirements.md](docs/requirements.md) を参照してください。
@@ -45,6 +59,7 @@ Gradle マルチモジュール。`:domain` は Android フレームワークに
 ```
 
 必要環境: JDK 17 / Android SDK（compileSdk 36）。minSdk は 26（Android 8.0）。
+実機で動かすには、上記「対応端末」の条件を満たす端末が必要です。
 
 実機での確認手順は [specs/001-reading-shelf-record/quickstart.md](specs/001-reading-shelf-record/quickstart.md) にあります。
 
